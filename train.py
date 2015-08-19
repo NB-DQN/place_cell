@@ -36,7 +36,7 @@ mod = cuda if args.gpu >= 0 else np
 
 # data generation        
 def generate_seq(seq_length, maze_size_x, maze_size_y):
-    directions_2d = []
+    directions = []
     locations_1d = [] # 1D coorinate
 
     current = (0, 0) # 2D coordinate
@@ -61,12 +61,12 @@ def generate_seq(seq_length, maze_size_x, maze_size_y):
         elif direction == [0, 1]:
             current = (current[0]    , current[1] + 1)
         
-        directions_2d.append(direction)
-        locations_1d.append(current[0]+current[1]*maze_size_x)
+        directions.append(direction)
+        locations_1d.append(current[0] + current[1] * maze_size_x)
         
-    directions_2d = np.array(directions_2d, dtype='float32')
+    directions = np.array(directions, dtype='float32')
     locations_1d = np.array(locations_1d, dtype='int32')
-    return directions_2d, locations_1d
+    return directions, locations_1d
     
 # forward propagation
 def forward_one_step(data, targets, state, train=True):
@@ -85,8 +85,7 @@ def forward_one_step(data, targets, state, train=True):
 def make_initial_state(batchsize=1, train=True):
     global mod
     return {name: chainer.Variable(mod.zeros((batchsize, n_units),
-                                             dtype=np.float32),
-                                   volatile=not train)
+                                             dtype=np.float32), volatile=not train)
             for name in ('c', 'h')}
              
 # evaluation routine
@@ -95,7 +94,7 @@ def evaluate(data, targets):
     state = make_initial_state(batchsize, train=False)
     for i in six.moves.range(targets.size):
         x_batch = np.array([data[i]])
-        t_batch = np.array([targets[i]])z
+        t_batch = np.array([targets[i]])
         state, loss, accuracy = forward_one_step(x_batch, t_batch, state, train=False)
         sum_accuracy += accuracy.data
     return int(sum_accuracy)
@@ -113,13 +112,9 @@ def pretrain(maze_size_x=9, maze_size_y=9):
         model.to_gpu()    
     
     # dataset
-    """
-    input data: direction,  [x, y], 0.5: left/bottom move, 1: right/top move
-    output target: coordinate (converted to 1D)
-    """
-    train_data, train_targets = generate_seq(1000,maze_size_x, maze_size_y)
-    valid_data, valid_targets = generate_seq(100,maze_size_x, maze_size_y)
-    test_data, test_targets = generate_seq(1000,maze_size_x, maze_size_y)
+    train_data, train_targets = generate_seq(1000, maze_size_x, maze_size_y)
+    valid_data, valid_targets = generate_seq(100, maze_size_x, maze_size_y)
+    test_data, test_targets = generate_seq(1000, maze_size_x, maze_size_y)
     
     # optimizer
     optimizer = optimizers.SGD()
@@ -168,7 +163,7 @@ def pretrain(maze_size_x=9, maze_size_y=9):
             print('evaluate')
             now = time.time()
             perp = evaluate(valid_data, valid_targets)
-            print('epoch {} validation misclassified: {}'.format(epoch, perp))
+            print('epoch {} validation misclassified: {} / {}'.format(epoch, perp, valid_data.shape[0]))
             cur_at += time.time() - now  # skip time of evaluation
     
         sys.stdout.flush()
@@ -176,6 +171,6 @@ def pretrain(maze_size_x=9, maze_size_y=9):
     # Evaluate on test dataset
     print('test')
     test_perp = evaluate(test_data, valid_targets)
-    print('test misclassified:', test_perp)
+    print('test misclassified: {} / {}'.format(test_perp, test_data.shape[0]))
     
     return model
