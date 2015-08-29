@@ -11,6 +11,7 @@ import math
 import sys
 import time
 import random
+import pickle
 
 import numpy as np
 import six
@@ -21,8 +22,8 @@ import chainer.functions as F
 from chainer import optimizers
 
 # set parameters
-n_epoch = 10   # number of epochs
-n_units = 30  # number of units per layer
+n_epoch = 100  # number of epochs
+n_units = 100  # number of units per layer
 batchsize = 1   # minibatch size
 bprop_len = 35   # length of truncated BPTT
 grad_clip = 5    # gradient norm threshold to clip
@@ -112,9 +113,9 @@ def pretrain(maze_size_x=9, maze_size_y=9):
         model.to_gpu()    
     
     # dataset
-    train_data, train_targets = generate_seq(1000, maze_size_x, maze_size_y)
+    train_data, train_targets = generate_seq(10000, maze_size_x, maze_size_y)
     valid_data, valid_targets = generate_seq(100, maze_size_x, maze_size_y)
-    test_data, test_targets = generate_seq(1000, maze_size_x, maze_size_y)
+    test_data, test_targets = generate_seq(200, maze_size_x, maze_size_y)
     
     # optimizer
     optimizer = optimizers.SGD()
@@ -134,7 +135,7 @@ def pretrain(maze_size_x=9, maze_size_y=9):
     for i in six.moves.range(jump * n_epoch):
         x_batch = np.array([train_data[(jump * j + i) % whole_len]
                             for j in six.moves.range(batchsize)])
-        t_batch = np.array([train_targets[(jump * j + i + 1) % whole_len]
+        t_batch = np.array([train_targets[(jump * j + i) % whole_len]
                             for j in six.moves.range(batchsize)])
         state, loss_i, acc_i = forward_one_step(x_batch, t_batch, state)
         accum_loss += loss_i
@@ -170,7 +171,11 @@ def pretrain(maze_size_x=9, maze_size_y=9):
     
     # Evaluate on test dataset
     print('test')
-    test_perp = evaluate(test_data, valid_targets)
+    test_perp = evaluate(test_data, test_targets)
     print('test misclassified: {} / {}'.format(test_perp, test_data.shape[0]))
+    
+    f = open('pretrained_model_'+str(maze_size_x)+'_'+str(maze_size_y)+'.pkl', 'wb')
+    pickle.dump(model, f, 2)
+    f.close()
     
     return model
