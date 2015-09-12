@@ -4,7 +4,7 @@ class PlaceCell(object):
     __metaclass__ = ABCMeta
 
     @abstractmethod
-    def validate_action(action):
+    def validate_action(self, action):
         pass
 
     @abstractmethod
