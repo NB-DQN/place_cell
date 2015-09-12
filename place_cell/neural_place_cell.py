@@ -4,6 +4,9 @@ class NeuralPlaceCell(PlaceCell):
     def __init__(self):
         pass
 
+    def validate_action(self, action):
+        pass
+
     def move(self, action):
         pass
 

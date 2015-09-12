@@ -4,6 +4,9 @@ class DeterministicPlaceCell(PlaceCell):
     def __init__(self, environment):
         self.__environment = environment
 
+    def validate_action(self, action):
+        pass
+
     def move(self, action):
         self._DeterministicPlaceCell__environment.move(action)
 
