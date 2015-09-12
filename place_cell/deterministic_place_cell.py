@@ -10,10 +10,10 @@ class DeterministicPlaceCell(PlaceCell):
 
     def virtual_move(self, action):
         neighbor = [ \
-            (self.current_coordinate[0] + 1, self.current_coordinate[1]    ), \
-            (self.current_coordinate[0] - 1, self.current_coordinate[1]    ), \
-            (self.current_coordinate[0]    , self.current_coordinate[1] + 1), \
-            (self.current_coordinate[0]    , self.current_coordinate[1] - 1)]
+            (self.virtual_coordinate[0] + 1, self.virtual_coordinate[1]    ), \
+            (self.virtual_coordinate[0] - 1, self.virtual_coordinate[1]    ), \
+            (self.virtual_coordinate[0]    , self.virtual_coordinate[1] + 1), \
+            (self.virtual_coordinate[0]    , self.virtual_coordinate[1] - 1)]
         self.virtual_coordinate = neighbor[direction]
 
     def move(self, action):
