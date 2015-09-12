@@ -11,5 +11,9 @@ class PlaceCell(object):
         pass
 
     @abstractmethod
+    def coordinate_id(self):
+        pass
+
+    @abstractmethod
     def novelty(self):
         pass
