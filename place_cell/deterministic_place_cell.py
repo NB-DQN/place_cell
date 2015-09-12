@@ -14,7 +14,7 @@ class DeterministicPlaceCell(PlaceCell):
             (self.virtual_coordinate[0] - 1, self.virtual_coordinate[1]    ), \
             (self.virtual_coordinate[0]    , self.virtual_coordinate[1] + 1), \
             (self.virtual_coordinate[0]    , self.virtual_coordinate[1] - 1)]
-        self.virtual_coordinate = neighbor[direction]
+        self.virtual_coordinate = neighbor[action]
 
     def move(self, action):
         self._DeterministicPlaceCell__environment.move(action)
