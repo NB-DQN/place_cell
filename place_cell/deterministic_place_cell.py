@@ -6,7 +6,7 @@ class DeterministicPlaceCell(PlaceCell):
         self.virtual_coordinate = (0, 0)
 
     def validate_action(self, action):
-        return 0 <= virtual_coordinate[0] <= 8 and 0 <= virtual_coordinate[1] <= 8
+        return 0 <= self.virtual_coordinate[0] <= 8 and 0 <= self.virtual_coordinate[1] <= 8
 
     def virtual_move(self, action):
         neighbor = [ \
@@ -18,10 +18,10 @@ class DeterministicPlaceCell(PlaceCell):
 
     def move(self, action):
         self._DeterministicPlaceCell__environment.move(action)
-        virtual_coordinate = self._DeterministicPlaceCell__environment.current_coordinate
+        self.virtual_coordinate = self._DeterministicPlaceCell__environment.current_coordinate
 
     def coordinate_id(self):
-        return virtual_coordinate[0] + virtual_coordinate[1] * self._DeterministicPlaceCell__environment.size[1]
+        return self.virtual_coordinate[0] + self.virtual_coordinate[1] * self._DeterministicPlaceCell__environment.size[1]
 
     def novelty(self):
         return self._DeterministicPlaceCell__environment.novelty
