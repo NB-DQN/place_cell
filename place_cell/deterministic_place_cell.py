@@ -17,7 +17,8 @@ class DeterministicPlaceCell(PlaceCell):
             (self.virtual_coordinate[0]    , self.virtual_coordinate[1] + 1), \
             (self.virtual_coordinate[0]    , self.virtual_coordinate[1] - 1)]
         self.virtual_coordinate = neighbor[action]
-        self._DeterministicPlaceCell__check_novelty(step)
+        self._DeterministicPlaceCell__check_novelty()
+        return self._DeterministicPlaceCell__check_steps(step)
 
     def coordinate_id(self):
         return self.virtual_coordinate[0] + self.virtual_coordinate[1] * self.environment_size[1]
@@ -34,8 +35,12 @@ class DeterministicPlaceCell(PlaceCell):
                 break
         if flag:
             self.novelty = 0
-            if self.history[self.coordinate_id()] < step:
-                self.history[self.coordinate_id()] = step
         else:
             self.novelty = 10
-            self.history[self.coordinate_id()] = step
+
+    def __check_steps(step):
+        if self.history.setdefault(self.coordinate_id(), step) <= step:
+            selt.history[self.coordinate_id()] = step
+            return True
+        else:
+            return False
