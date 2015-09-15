@@ -9,14 +9,14 @@ class DeterministicPlaceCell(PlaceCell):
     def validate_action(self, action):
         return 0 <= self.virtual_coordinate[0] <= 8 and 0 <= self.virtual_coordinate[1] <= 8
 
-    def move(self, action):
+    def move(self, action, step):
         neighbor = [ \
             (self.virtual_coordinate[0] + 1, self.virtual_coordinate[1]    ), \
             (self.virtual_coordinate[0] - 1, self.virtual_coordinate[1]    ), \
             (self.virtual_coordinate[0]    , self.virtual_coordinate[1] + 1), \
             (self.virtual_coordinate[0]    , self.virtual_coordinate[1] - 1)]
         self.virtual_coordinate = neighbor[action]
-        self._DeterministicPlaceCell__check_novelty()
+        self._DeterministicPlaceCell__check_novelty(step)
 
     def coordinate_id(self):
         return self.virtual_coordinate[0] + self.virtual_coordinate[1] * self._DeterministicPlaceCell__environment.size[1]
@@ -31,4 +31,4 @@ class DeterministicPlaceCell(PlaceCell):
             self.novelty = 0
         else:
             self.novelty = 10
-            self.history.append(self.coordinate_id())
+            self.history[self.coordinate_id()] = step
