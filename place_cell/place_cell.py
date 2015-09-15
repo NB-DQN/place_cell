@@ -8,17 +8,9 @@ class PlaceCell(object):
         pass
 
     @abstractmethod
-    def virtual_move(self, action):
-        pass
-
-    @abstractmethod
     def move(self, action):
         pass
 
     @abstractmethod
     def coordinate_id(self):
-        pass
-
-    @abstractmethod
-    def novelty(self):
         pass
