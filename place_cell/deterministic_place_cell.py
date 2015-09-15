@@ -29,6 +29,8 @@ class DeterministicPlaceCell(PlaceCell):
                 break
         if flag:
             self.novelty = 0
+            if self.history[self.coordinate_id()] < step:
+                self.history[self.coordinate_id()] = step
         else:
             self.novelty = 10
             self.history[self.coordinate_id()] = step
