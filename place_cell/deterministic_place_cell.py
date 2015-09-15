@@ -39,9 +39,9 @@ class DeterministicPlaceCell(PlaceCell):
         else:
             self.novelty = 10
 
-    def __check_steps(step):
+    def __check_steps(self, step):
         if self.history.setdefault(self.coordinate_id(), step) <= step:
-            selt.history[self.coordinate_id()] = step
+            self.history[self.coordinate_id()] = step
             return True
         else:
             return False
