@@ -1,7 +1,8 @@
 from place_cell import PlaceCell
 
 class DeterministicPlaceCell(PlaceCell):
-    def __init__(self):
+    def __init__(self, size):
+        self.environment_size = size
         self.virtual_coordinate = (0, 0)
         self.history = {}
         self.novelty = 0
@@ -19,7 +20,7 @@ class DeterministicPlaceCell(PlaceCell):
         self._DeterministicPlaceCell__check_novelty(step)
 
     def coordinate_id(self):
-        return self.virtual_coordinate[0] + self.virtual_coordinate[1] * self._DeterministicPlaceCell__environment.size[1]
+        return self.virtual_coordinate[0] + self.virtual_coordinate[1] * self.environment_size[1]
 
     def __check_novelty(self):
         flag = False
