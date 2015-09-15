@@ -22,6 +22,10 @@ class DeterministicPlaceCell(PlaceCell):
     def coordinate_id(self):
         return self.virtual_coordinate[0] + self.virtual_coordinate[1] * self.environment_size[1]
 
+    def set_coordinate_id(self, coordinate_id):
+        self.virtual_coordinate[0] = coordinate_id % self.environment_size[1]
+        self.virtual_coordinate[1] = (coordinate_id - self.virtual_coordinate[0]) / self.environment_size[1]
+
     def __check_novelty(self):
         flag = False
         for coordinate in self.history.keys():
