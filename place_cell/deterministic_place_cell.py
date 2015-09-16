@@ -7,16 +7,21 @@ class DeterministicPlaceCell(PlaceCell):
         self.history = {}
         self.novelty = 0
 
-    def validate_action(self, action):
-        return 0 <= self.virtual_coordinate[0] <= 8 and 0 <= self.virtual_coordinate[1] <= 8
-
-    def move(self, action, step):
-        neighbor = [ \
+    def neighbor(self, action):
+        neighbors = [ \
             (self.virtual_coordinate[0] + 1, self.virtual_coordinate[1]    ), \
             (self.virtual_coordinate[0] - 1, self.virtual_coordinate[1]    ), \
             (self.virtual_coordinate[0]    , self.virtual_coordinate[1] + 1), \
             (self.virtual_coordinate[0]    , self.virtual_coordinate[1] - 1)]
-        self.virtual_coordinate = neighbor[action]
+        return neighbors[action]
+
+    def validate_action(self, action):
+        coordinate = self.neighbor(action)
+        return 0 <= coordinate[0] < self.environment_size[0] and \
+               0 <= coordinate[1] < self.environment_size[1]
+
+    def move(self, action, step):
+        self.virtual_coordinate = self.neighbor(action)
         self._DeterministicPlaceCell__check_novelty()
         return self._DeterministicPlaceCell__check_steps(step)
 
