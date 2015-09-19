@@ -22,11 +22,11 @@ import chainer.functions as F
 from chainer import optimizers
 
 # set parameters
-n_epoch = 1000000 # number of epochs
+n_epoch = 50000 # 1000000 # number of epochs
 n_units = 25 # number of units per layer, len(train)=5 -> 20 might be the best
 batchsize = 1 # minibatch size
 bprop_len = 1 # length of truncated BPTT
-valid_len = n_epoch // 100 # epoch on which accuracy and perp are calculated
+valid_len = n_epoch // 50 # 1000 # epoch on which accuracy and perp are calculated
 grad_clip = 5 # gradient norm threshold to clip
 maze_size_x = 9
 maze_size_y = 9
@@ -72,8 +72,8 @@ def generate_seq(seq_length, maze_size_x, maze_size_y):
         directions.append(direction)
         locations_1d.append(current[0]+current[1]*maze_size_x)
         
-    directions = np.array(directions, dtype='float32')
-    locations_1d = np.array(locations_1d, dtype='int32')
+    # directions = np.array(directions, dtype='float32')
+    # locations_1d = np.array(locations_1d, dtype='int32')
     return directions, locations_1d
 
 # validation dataset
@@ -84,7 +84,7 @@ test_data, test_targets = generate_seq(100, maze_size_x, maze_size_y)
 
 # model
 model = chainer.FunctionSet(
-    x_to_h = F.Linear(2, n_units * 4),
+    x_to_h = F.Linear(4, n_units * 4),
     h_to_h = F.Linear(n_units, n_units * 4),
     h_to_y = F.Linear(n_units, maze_size_x * maze_size_y))
 if args.gpu >= 0:
@@ -94,6 +94,7 @@ if args.gpu >= 0:
 # optimizer
 optimizer = optimizers.SGD(lr=1.)
 optimizer.setup(model.collect_parameters())
+
 
 # one-step forward propagation
 def forward_one_step(data, targets, state, train=True):
@@ -119,14 +120,19 @@ def make_initial_state(batchsize=batchsize, train=True):
 def evaluate(data, targets, test=False):
     sum_accuracy = 0
     state = make_initial_state(batchsize=1, train=False)
-    for i in six.moves.range(targets.size):
-        x_batch = np.array([data[i]])
-        t_batch = np.array([targets[i]])
+    
+    for i in six.moves.range(len(targets)):
+        if targets[i]% 2 == 0:
+            x_batch = np.array([data[i] + [targets[i-1] % maze_size_x, targets[i-1] // maze_size_x]], dtype = 'float32')
+        else:
+            x_batch = np.array([data[i] + [0, 0]], dtype = 'float32')
+        t_batch = np.array([targets[i]], dtype = 'int32')
         state, loss, accuracy = forward_one_step(x_batch, t_batch, state, train=False)
         sum_accuracy += accuracy.data
         if test == True:
             print('{} Target: ({}, {})'.format(accuracy.data, t_batch[0] % maze_size_x, 
                 t_batch[0] // maze_size_x))
+
             # print('c: {}, h: {}'.format(state['c'].data, state['h'].data)) # show the hidden states
     return int(cuda.to_cpu(sum_accuracy))
                 
@@ -156,8 +162,11 @@ for loop in range(len(train_data_length)):
         for i in six.moves.range(jump):
         
             # forward propagation
-            x_batch = np.array([train_data[i % whole_len]])
-            t_batch = np.array([train_targets[i % whole_len]])        
+            if train_targets[i]% 2 == 0:
+                x_batch = np.array([train_data[i] + [train_targets[i-1] % maze_size_x, train_targets[i-1] // maze_size_x]], dtype = 'float32')
+            else:
+                x_batch = np.array([train_data[i] + [0, 0]], dtype = 'float32')
+            t_batch = np.array([train_targets[i]], dtype = 'int32')
             state, loss_i, acc_i = forward_one_step(x_batch, t_batch, state)
             accum_loss += loss_i
             cur_log_perp += loss_i.data.reshape(())
@@ -182,7 +191,7 @@ for loop in range(len(train_data_length)):
             now = time.time()
             throuput = valid_len / (now - cur_at)
             print('epoch {}: train perp: {:.2f} train classified {}/{}, valid classified {}/{} ({:.2f} epochs/sec)'
-                .format(epoch+1, perp, train_perp, whole_len, valid_perp, valid_data.shape[0], throuput))            
+                .format(epoch+1, perp, train_perp, whole_len, valid_perp, len(valid_data), throuput))            
             cur_at = now
             
             #  termination criteria
@@ -191,15 +200,15 @@ for loop in range(len(train_data_length)):
             else:
                 cur_log_perp.fill(0)   
             
-        epoch += 1      
+        epoch += 1  
+        
+        # save the model    
+        f = open('pretrained_model_'+str(maze_size_x)+'_'+str(maze_size_y)+'.pkl', 'wb')
+        pickle.dump(model, f, 2)
+        f.close()      
                     
     # Evaluate on test dataset
     print('[test]')
     test_perp = evaluate(test_data, test_targets, test=True)
-    print('test classified: {}/{}'.format(test_perp, test_data.shape[0]))
-
-# save the model    
-f = open('pretrained_model_'+str(maze_size_x)+'_'+str(maze_size_y)+'.pkl', 'wb')
-pickle.dump(model, f, 2)
-f.close()  
+    print('test classified: {}/{}'.format(test_perp, len(test_data)))
                 
