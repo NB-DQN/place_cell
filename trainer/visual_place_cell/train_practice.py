@@ -25,7 +25,7 @@ from dataset_generator import DatasetGenerator
 
 # set parameters
 n_epoch = 100000 # number of epochs
-n_units = 25 # number of units per layer, len(train)=5 -> 20 might be the best
+n_units = 81 # number of units per layer, len(train)=5 -> 20 might be the best
 batchsize = 1 # minibatch size
 bprop_len = 1 # length of truncated BPTT
 valid_len = n_epoch // 100 # 1000 # epoch on which accuracy and perp are calculated
@@ -33,8 +33,6 @@ grad_clip = 5 # gradient norm threshold to clip
 maze_size = (9, 9)
 
 train_data_length = [20, 100]
-offset_timing = 3
-
 
 # GPU
 parser = argparse.ArgumentParser()
@@ -44,24 +42,19 @@ args = parser.parse_args()
 mod = cuda.cupy if args.gpu >= 0 else np
 
 # generate dataset
-"""
-input data: direction (one-hot)
-output target: coordinate (converted to 1D)
-"""
-
-
+dg = DatasetGenerator(maze_size)
 
 # validation dataset
-valid_data, valid_targets = generate_seq(100, self.size[0], self.size[1])
+valid_data = dg.generate_seq(100)
 
 # test dataset
-test_data, test_targets = generate_seq(100, self.size[0], self.size[1])
+test_data = dg.generate_seq(100)
 
 # model
 model = chainer.FunctionSet(
-        x_to_h = F.Linear(85, n_units * 4),
+        x_to_h = F.Linear(64, n_units * 4),
         h_to_h = F.Linear(n_units, n_units * 4),
-        h_to_y = F.Linear(n_units, self.size[0] * self.size[1]))
+        h_to_y = F.Linear(n_units, 60))
 if args.gpu >= 0:
     cuda.check_cuda_available()
     cuda.get_device(args.gpu).use()
@@ -71,19 +64,20 @@ if args.gpu >= 0:
 optimizer = optimizers.SGD(lr=1.)
 optimizer.setup(model.collect_parameters())
 
-
 # one-step forward propagation
-def forward_one_step(data, targets, state, train=True):
+def forward_one_step(x, t, state, train=True):
     # if args.gpu >= 0:
     #     data = cuda.to_gpu(data)
     #     targets = cuda.to_gpu(targets)
-    x = chainer.Variable(data, volatile=not train)
-    t = chainer.Variable(targets, volatile=not train)
+    x = chainer.Variable(x, volatile=not train)
+    t = chainer.Variable(t, volatile=not train)
     h_in = model.x_to_h(x) + model.h_to_h(state['h'])
     c, h = F.lstm(state['c'], h_in)
     y = model.h_to_y(h)
     state = {'c': c, 'h': h}
-    return state, F.softmax_cross_entropy(y, t), F.accuracy(y, t)
+
+    accuracy = ((t.data - y.data) ** 2).sum() / 60
+    return state, F.sigmoid_cross_entropy(y, t), accuracy
 
 # initialize hidden state
 def make_initial_state(batchsize=batchsize, train=True):
@@ -92,25 +86,22 @@ def make_initial_state(batchsize=batchsize, train=True):
         volatile=not train)
         for name in ('c', 'h')}
 
-    # evaluation
-def evaluate(data, targets, test=False):
+# evaluation
+def evaluate(data, test=False):
     sum_accuracy = mod.zeros(())
     state = make_initial_state(batchsize=1, train=False)
 
-    for i in six.moves.range(len(targets)):
-        one_hot_target = inilist = [0] * 81
-        if targets[i] % offset_timing == 0:
-            one_hot_target[targets[i]] = 1
-        x_batch = mod.array([data[i] + one_hot_target], dtype = 'float32')
-        t_batch = mod.array([targets[i]], dtype = 'int32')
+    for i in six.moves.range(len(data['input'])):
+        x_batch = mod.asarray([data['input'][i]], dtype = 'float32')
+        t_batch = mod.asarray([data['output'][i]], dtype = 'int32')
         state, loss, accuracy = forward_one_step(x_batch, t_batch, state, train=False)
-        sum_accuracy += accuracy.data
+        sum_accuracy += accuracy
         if test == True:
-            print('{} Target: ({}, {})'.format(accuracy.data, t_batch[0] % maze_size_x,
-                t_batch[0] // maze_size_x))
+            print('{} Target: ({}, {})'.format(accuracy, t_batch[0] % maze_size[0],
+                t_batch[0] // maze_size[0]))
 
             # print('c: {}, h: {}'.format(state['c'].data, state['h'].data)) # show the hidden states
-    return int(cuda.to_cpu(sum_accuracy))
+    return cuda.to_cpu(sum_accuracy)
 
 # learning loop iterations
 for loop in range(len(train_data_length)):
@@ -133,19 +124,13 @@ for loop in range(len(train_data_length)):
         state = make_initial_state()
 
         # train dataset
-        if loop == 0:
-            train_data, train_targets = generate_seq(whole_len, maze_size_x, self.size[1])
-        else:
-            train_data, train_targets = generate_seq_remote(whole_len, maze_size_x, self.size[1])
+        train_data = dg.generate_seq(whole_len)
 
         for i in six.moves.range(jump):
 
             # forward propagation
-            one_hot_target = inilist = [0] * 81
-            if train_targets[i] % offset_timing == 0:
-                one_hot_target[train_targets[i]] = 1
-            x_batch = mod.array([train_data[i] + one_hot_target], dtype = 'float32')
-            t_batch = mod.array([train_targets[i]], dtype = 'int32')
+            x_batch = mod.array([train_data['input'][i]],  dtype = 'float32')
+            t_batch = mod.array([train_data['output'][i]], dtype = 'int32')
 
             state, loss_i, acc_i = forward_one_step(x_batch, t_batch, state)
             accum_loss += loss_i
@@ -165,13 +150,13 @@ for loop in range(len(train_data_length)):
         if (epoch + 1) % valid_len == 0:
 
             # calculate accuracy, cumulative loss & throuput
-            train_perp = evaluate(train_data, train_targets)
-            valid_perp = evaluate(valid_data, valid_targets)
+            train_perp = evaluate(train_data)
+            valid_perp = evaluate(valid_data)
             perp = cuda.to_cpu(cur_log_perp) / valid_len
             now = time.time()
             throuput = valid_len / (now - cur_at)
-            print('epoch {}: train perp: {:.2f} train classified {}/{}, valid classified {}/{} ({:.2f} epochs/sec)'
-                    .format(epoch+1, perp, train_perp, whole_len, valid_perp, len(valid_data), throuput))
+            print('epoch {}: train perp: {:.2f} train classified {}, valid classified {} ({:.2f} epochs/sec)'
+                    .format(epoch+1, perp, train_perp, valid_perp, throuput))
             cur_at = now
 
             #  termination criteria
@@ -183,7 +168,7 @@ for loop in range(len(train_data_length)):
         epoch += 1
 
         # save the model
-        f = open('pretrained_model_'+str(maze_size_x)+'_'+str(self.size[1])+'.pkl', 'wb')
+        f = open('pretrained_model_'+str(maze_size[0])+'_'+str(maze_size[1])+'.pkl', 'wb')
         pickle.dump(model, f, 2)
         f.close()
 
