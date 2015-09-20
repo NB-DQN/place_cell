@@ -32,7 +32,7 @@ maze_size_x = 9
 maze_size_y = 9
 
 train_data_length = [20, 100]
-offset_timing = 1
+offset_timing = 2
 
 
 # GPU
