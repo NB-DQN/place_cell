@@ -31,6 +31,10 @@ grad_clip = 5 # gradient norm threshold to clip
 maze_size_x = 9
 maze_size_y = 9
 
+train_data_length = [100]
+offset_timing = 1
+
+
 # GPU
 parser = argparse.ArgumentParser()
 parser.add_argument('--gpu', '-g', default=-1, type=int,
@@ -122,7 +126,7 @@ def evaluate(data, targets, test=False):
     state = make_initial_state(batchsize=1, train=False)
     
     for i in six.moves.range(len(targets)):
-        if targets[i]% 1 == 0:
+        if targets[i] % offset_timing == 0:
             if i == 0:
                 x_batch = np.array([data[i] + [0,0]], dtype = 'float32')
             else:
@@ -140,7 +144,6 @@ def evaluate(data, targets, test=False):
     return int(cuda.to_cpu(sum_accuracy))
                 
 # learning loop iterations
-train_data_length = [100]
 for loop in range(len(train_data_length)):
 
     # loop initialization
@@ -166,7 +169,7 @@ for loop in range(len(train_data_length)):
         for i in six.moves.range(jump):
         
             # forward propagation
-            if train_targets[i]% 1 == 0:
+            if train_targets[i] % offset_timing == 0:
                 if i == 0:
                     x_batch = np.array([train_data[i] + [0,0]], dtype = 'float32')
                 else:
