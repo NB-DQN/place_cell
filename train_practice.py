@@ -31,7 +31,7 @@ grad_clip = 5 # gradient norm threshold to clip
 maze_size_x = 9
 maze_size_y = 9
 
-train_data_length = [100]
+train_data_length = [20, 100]
 offset_timing = 1
 
 
@@ -80,6 +80,50 @@ def generate_seq(seq_length, maze_size_x, maze_size_y):
     # locations_1d = np.array(locations_1d, dtype='int32')
     return directions, locations_1d
 
+def generate_seq_remote(seq_length, maze_size_x, maze_size_y):
+    directions = []
+    locations_1d = [] # 1D coorinate
+
+    current = (0, 0) # 2D coordinate
+    for i in range(0, seq_length):
+    	direction_choice = [[0, 0.5], [1, 0.5], [0.5, 0], [0.5, 1]] # old code: [[0.5, 0], [1, 0], [0, 0.5], [0, 1]]
+        if current[0] == 0:
+            direction_choice.remove([0, 0.5])
+        if current[0] == maze_size_x-1:
+            direction_choice.remove([1, 0.5])
+        if current[1] == 0:
+            direction_choice.remove([0.5, 0])
+        if current[1] == maze_size_y-1:
+            direction_choice.remove([0.5, 1])
+        
+        if current[0] == 4 & current[1] <= 4:
+            threshold = 0.1
+            if random.random() > threshold:
+                direction_choice.remove([0, 0.5])                    
+        if curent[1] == 4 & current[0] <= 4:
+            threshold = 0.1
+            if random.random() > threshold:
+                direction_choice.remove([0.5, 0])
+                    
+        direction = random.choice(direction_choice)
+        
+        if   direction == [0, 0.5]:
+            current = (current[0] - 1, current[1]    )
+        elif direction == [1, 0.5]:
+            current = (current[0] + 1, current[1]    )
+        elif direction == [0.5, 0]:
+            current = (current[0]    , current[1] - 1)
+        elif direction == [0.5, 1]:
+            current = (current[0]    , current[1] + 1)
+        
+        directions.append(direction)
+        locations_1d.append(current[0]+current[1]*maze_size_x)
+        
+    # directions = np.array(directions, dtype='float32')
+    # locations_1d = np.array(locations_1d, dtype='int32')
+    return directions, locations_1d    
+    
+    
 # validation dataset
 valid_data, valid_targets = generate_seq(100, maze_size_x, maze_size_y)
 
@@ -165,8 +209,11 @@ for loop in range(len(train_data_length)):
         state = make_initial_state()
         
         # train dataset
-        train_data, train_targets = generate_seq(whole_len, maze_size_x, maze_size_y)
-        
+        if loop == 0:
+            train_data, train_targets = generate_seq(whole_len, maze_size_x, maze_size_y)
+        else:
+            train_data, train_targets = generate_seq_remote(whole_len, maze_size_x, maze_size_y)
+         
         for i in six.moves.range(jump):
         
             # forward propagation
