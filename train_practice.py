@@ -100,7 +100,7 @@ def generate_seq_remote(seq_length, maze_size_x, maze_size_y):
             threshold = 0.1
             if random.random() > threshold:
                 direction_choice.remove([0, 0.5])                    
-        if curent[1] == 4 and current[0] <= 4:
+        if current[1] == 4 and current[0] <= 4:
             threshold = 0.1
             if random.random() > threshold:
                 direction_choice.remove([0.5, 0])
