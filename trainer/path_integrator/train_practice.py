@@ -22,7 +22,7 @@ import chainer.functions as F
 from chainer import optimizers
 
 # set parameters
-n_epoch = 1000 # number of epochs
+n_epoch = 100000 # number of epochs
 n_units = 25 # number of units per layer, len(train)=5 -> 20 might be the best
 batchsize = 1 # minibatch size
 bprop_len = 1 # length of truncated BPTT
