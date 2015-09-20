@@ -40,7 +40,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--gpu', '-g', default=-1, type=int,
                     help='GPU ID (negative value indicates CPU)')                    
 args = parser.parse_args()
-mod = cuda if args.gpu >= 0 else np
+mod = cuda.cupy if args.gpu >= 0 else np
 
 # generate dataset
 """
@@ -92,7 +92,8 @@ model = chainer.FunctionSet(
     h_to_h = F.Linear(n_units, n_units * 4),
     h_to_y = F.Linear(n_units, maze_size_x * maze_size_y))
 if args.gpu >= 0:
-    cuda.init(args.gpu)
+    cuda.check_cuda_available()
+    cuda.get_device(args.gpu).use()
     model.to_gpu()
     
 # optimizer
