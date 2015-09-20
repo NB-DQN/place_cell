@@ -30,6 +30,7 @@ valid_len = n_epoch // 50 # 1000 # epoch on which accuracy and perp are calculat
 grad_clip = 5 # gradient norm threshold to clip
 maze_size_x = 9
 maze_size_y = 9
+offset_timing = 2
 
 # GPU
 parser = argparse.ArgumentParser()
@@ -46,29 +47,29 @@ output target: coordinate (converted to 1D)
 def generate_seq(seq_length, maze_size_x, maze_size_y):
     directions = []
     locations_1d = [] # 1D coorinate
-
+        
     current = (0, 0) # 2D coordinate
     for i in range(0, seq_length):
-    	direction_choice = [[0, 0.5], [1, 0.5], [0.5, 0], [0.5, 1]] # old code: [[0.5, 0], [1, 0], [0, 0.5], [0, 1]]
+        direction_choice = [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]]
         if current[0] == 0:
-            direction_choice.remove([0, 0.5])
+            direction_choice.remove([0, 0, 1, 0])
         if current[0] == maze_size_x-1:
-            direction_choice.remove([1, 0.5])
+            direction_choice.remove([1, 0, 0, 0])
         if current[1] == 0:
-            direction_choice.remove([0.5, 0])
+            direction_choice.remove([0, 0, 0, 1])
         if current[1] == maze_size_y-1:
-            direction_choice.remove([0.5, 1])
+            direction_choice.remove([0, 1, 0, 0])
         direction = random.choice(direction_choice)
         
-        if   direction == [0, 0.5]:
+        if   direction == [0, 0, 1, 0]:
             current = (current[0] - 1, current[1]    )
-        elif direction == [1, 0.5]:
+        elif direction == [1, 0, 0, 0]:
             current = (current[0] + 1, current[1]    )
-        elif direction == [0.5, 0]:
+        elif direction == [0, 0, 0, 1]:
             current = (current[0]    , current[1] - 1)
-        elif direction == [0.5, 1]:
+        elif direction == [0, 1, 0, 0]:
             current = (current[0]    , current[1] + 1)
-        
+
         directions.append(direction)
         locations_1d.append(current[0]+current[1]*maze_size_x)
         
@@ -110,25 +111,26 @@ def make_initial_state(batchsize=batchsize, train=True):
             for name in ('c', 'h')}
              
 # evaluation
+
+
 def evaluate(data, targets, test=False):
-    sum_accuracy = 0
+    sum_accuracy = mod.zeros(())
     state = make_initial_state(batchsize=1, train=False)
     
     for i in six.moves.range(len(targets)):
-        if targets[i]% 2 == 0:
-            x_batch = np.array([data[i] + [targets[i-1] % maze_size_x, targets[i-1] // maze_size_x]], dtype = 'float32')
-        else:
-            x_batch = np.array([data[i] + [0, 0]], dtype = 'float32')
-        t_batch = np.array([targets[i]], dtype = 'int32')
+        one_hot_target = inilist = [0] * 81
+        if targets[i] % offset_timing == 0:
+            one_hot_target[targets[i]] = 1
+        x_batch = mod.array([data[i] + one_hot_target], dtype = 'float32')
+        t_batch = mod.array([targets[i]], dtype = 'int32')
         state, loss, accuracy = forward_one_step(x_batch, t_batch, state, train=False)
         sum_accuracy += accuracy.data
         if test == True:
-            print('{} Target: ({}, {})'.format(accuracy.data, t_batch[0] % maze_size_x, 
-                t_batch[0] // maze_size_x))
+            print('{} Target: ({}, {})'.format(accuracy.data, t_batch[0] % maze_size_x,
+                                               t_batch[0] // maze_size_x))
 
-            # print('c: {}, h: {}'.format(state['c'].data, state['h'].data)) # show the hidden states
-    return int(cuda.to_cpu(sum_accuracy))                     
-    
+    return int(cuda.to_cpu(sum_accuracy))
+
 # Evaluate on test dataset
 print('[test]')
 test_perp = evaluate(test_data, test_targets, test=True)
