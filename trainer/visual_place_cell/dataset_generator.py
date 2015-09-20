@@ -46,11 +46,11 @@ class DatasetGenerator:
         return image
 
     def generate_seq(self, seq_length):
-        image_input = []
+        image = []
         directions = []
         coordinate_ids = []
 
-        image_input.append(self.visual_image())
+        image.append(self.visual_image())
         coordinate_ids.append((0, 0))
 
         for i in range(0, seq_length):
@@ -75,8 +75,14 @@ class DatasetGenerator:
                 self.current_coordinate = (self.current_coordinate[0]    , self.current_coordinate[1] - 1)
 
             directions.append(direction)
-            image_input.append(self.visual_image())
+            image.append(self.visual_image())
             coordinate_ids.append(self.current_coordinate)
 
-        return directions, image_input, coordinate_ids
+        input = []
+        for i in range(len(directions)):
+            input.append(directions[i] + image[i].tolist())
+
+        output = image[1:]
+
+        return { 'input': input, 'output': output }
 
