@@ -147,9 +147,9 @@ optimizer.setup(model.collect_parameters())
 
 # one-step forward propagation
 def forward_one_step(data, targets, state, train=True):
-    if args.gpu >= 0:
-        data = cuda.to_gpu(data)
-        targets = cuda.to_gpu(targets)
+    # if args.gpu >= 0:
+    #     data = cuda.to_gpu(data)
+    #     targets = cuda.to_gpu(targets)
     x = chainer.Variable(data, volatile=not train)
     t = chainer.Variable(targets, volatile=not train)
     h_in = model.x_to_h(x) + model.h_to_h(state['h'])
@@ -167,18 +167,18 @@ def make_initial_state(batchsize=batchsize, train=True):
              
 # evaluation
 def evaluate(data, targets, test=False):
-    sum_accuracy = 0
+    sum_accuracy = mod.zeros(())
     state = make_initial_state(batchsize=1, train=False)
     
     for i in six.moves.range(len(targets)):
         if targets[i] % offset_timing == 0:
             if i == 0:
-                x_batch = np.array([data[i] + [0,0]], dtype = 'float32')
+                x_batch = mod.array([data[i] + [0,0]], dtype = 'float32')
             else:
-                x_batch = np.array([data[i] + [targets[i-1] % maze_size_x, targets[i-1] // maze_size_x]], dtype = 'float32')
+                x_batch = mod.array([data[i] + [targets[i-1] % maze_size_x, targets[i-1] // maze_size_x]], dtype = 'float32')
         else:
-            x_batch = np.array([data[i] + [0, 0]], dtype = 'float32')
-        t_batch = np.array([targets[i]], dtype = 'int32')
+            x_batch = mod.array([data[i] + [0, 0]], dtype = 'float32')
+        t_batch = mod.array([targets[i]], dtype = 'int32')
         state, loss, accuracy = forward_one_step(x_batch, t_batch, state, train=False)
         sum_accuracy += accuracy.data
         if test == True:
@@ -219,12 +219,12 @@ for loop in range(len(train_data_length)):
             # forward propagation
             if train_targets[i] % offset_timing == 0:
                 if i == 0:
-                    x_batch = np.array([train_data[i] + [0,0]], dtype = 'float32')
+                    x_batch = mod.array([train_data[i] + [0,0]], dtype = 'float32')
                 else:
-                    x_batch = np.array([train_data[i] + [train_targets[i-1] % maze_size_x, train_targets[i-1] // maze_size_x]], dtype = 'float32')
+                    x_batch = mod.array([train_data[i] + [train_targets[i-1] % maze_size_x, train_targets[i-1] // maze_size_x]], dtype = 'float32')
             else:
-                x_batch = np.array([train_data[i] + [0, 0]], dtype = 'float32')
-            t_batch = np.array([train_targets[i]], dtype = 'int32')
+                x_batch = mod.array([train_data[i] + [0, 0]], dtype = 'float32')
+            t_batch = mod.array([train_targets[i]], dtype = 'int32')
             state, loss_i, acc_i = forward_one_step(x_batch, t_batch, state)
             accum_loss += loss_i
             cur_log_perp += loss_i.data.reshape(())
