@@ -22,11 +22,11 @@ import chainer.functions as F
 from chainer import optimizers
 
 # set parameters
-n_epoch = 50000 # 1000000 # number of epochs
+n_epoch = 100000 # 50000 # 1000000 # number of epochs
 n_units = 25 # number of units per layer, len(train)=5 -> 20 might be the best
 batchsize = 1 # minibatch size
 bprop_len = 1 # length of truncated BPTT
-valid_len = n_epoch // 50 # 1000 # epoch on which accuracy and perp are calculated
+valid_len = n_epoch // 100 # 1000 # epoch on which accuracy and perp are calculated
 grad_clip = 5 # gradient norm threshold to clip
 maze_size_x = 9
 maze_size_y = 9
@@ -77,7 +77,7 @@ def generate_seq(seq_length, maze_size_x, maze_size_y):
     return directions, locations_1d
 
 # validation dataset
-valid_data, valid_targets = generate_seq(20, maze_size_x, maze_size_y)
+valid_data, valid_targets = generate_seq(100, maze_size_x, maze_size_y)
 
 # test dataset
 test_data, test_targets = generate_seq(100, maze_size_x, maze_size_y)
@@ -122,8 +122,11 @@ def evaluate(data, targets, test=False):
     state = make_initial_state(batchsize=1, train=False)
     
     for i in six.moves.range(len(targets)):
-        if targets[i]% 2 == 0:
-            x_batch = np.array([data[i] + [targets[i-1] % maze_size_x, targets[i-1] // maze_size_x]], dtype = 'float32')
+        if targets[i]% 1 == 0:
+            if i == 0:
+                x_batch = np.array([data[i] + [0,0]], dtype = 'float32')
+            else:
+                x_batch = np.array([data[i] + [targets[i-1] % maze_size_x, targets[i-1] // maze_size_x]], dtype = 'float32')
         else:
             x_batch = np.array([data[i] + [0, 0]], dtype = 'float32')
         t_batch = np.array([targets[i]], dtype = 'int32')
@@ -137,7 +140,7 @@ def evaluate(data, targets, test=False):
     return int(cuda.to_cpu(sum_accuracy))
                 
 # learning loop iterations
-train_data_length = [16]
+train_data_length = [100]
 for loop in range(len(train_data_length)):
 
     # loop initialization
@@ -148,7 +151,8 @@ for loop in range(len(train_data_length)):
     cur_at = start_at
     epoch = 0
     accum_loss = chainer.Variable(mod.zeros((), dtype=np.float32))
-    print('[training] going to train {} iterations'.format(jump * n_epoch))
+    print('[train]')
+    print('going to train {} iterations'.format(jump * n_epoch))
     
     # loop starts
     while epoch <= n_epoch:
@@ -162,8 +166,11 @@ for loop in range(len(train_data_length)):
         for i in six.moves.range(jump):
         
             # forward propagation
-            if train_targets[i]% 2 == 0:
-                x_batch = np.array([train_data[i] + [train_targets[i-1] % maze_size_x, train_targets[i-1] // maze_size_x]], dtype = 'float32')
+            if train_targets[i]% 1 == 0:
+                if i == 0:
+                    x_batch = np.array([train_data[i] + [0,0]], dtype = 'float32')
+                else:
+                    x_batch = np.array([train_data[i] + [train_targets[i-1] % maze_size_x, train_targets[i-1] // maze_size_x]], dtype = 'float32')
             else:
                 x_batch = np.array([train_data[i] + [0, 0]], dtype = 'float32')
             t_batch = np.array([train_targets[i]], dtype = 'int32')
