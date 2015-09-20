@@ -22,7 +22,7 @@ import chainer.functions as F
 from chainer import optimizers
 
 # set parameters
-n_epoch = 100000 # 50000 # 1000000 # number of epochs
+n_epoch = 1000 # 50000 # 1000000 # number of epochs
 n_units = 25 # number of units per layer, len(train)=5 -> 20 might be the best
 batchsize = 1 # minibatch size
 bprop_len = 1 # length of truncated BPTT
@@ -132,7 +132,7 @@ test_data, test_targets = generate_seq(100, maze_size_x, maze_size_y)
 
 # model
 model = chainer.FunctionSet(
-    x_to_h = F.Linear(4, n_units * 4),
+    x_to_h = F.Linear(85, n_units * 4),
     h_to_h = F.Linear(n_units, n_units * 4),
     h_to_y = F.Linear(n_units, maze_size_x * maze_size_y))
 if args.gpu >= 0:
@@ -164,7 +164,9 @@ def make_initial_state(batchsize=batchsize, train=True):
                                              dtype=np.float32),
                                    volatile=not train)
             for name in ('c', 'h')}
-             
+
+# one of K conversion
+
 # evaluation
 def evaluate(data, targets, test=False):
     sum_accuracy = mod.zeros(())
