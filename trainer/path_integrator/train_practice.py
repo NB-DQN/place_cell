@@ -32,7 +32,7 @@ maze_size_x = 9
 maze_size_y = 9
 
 train_data_length = [20, 100]
-offset_timing = 2
+offset_timing = 3
 
 
 # GPU
@@ -164,8 +164,6 @@ def make_initial_state(batchsize=batchsize, train=True):
                                              dtype=np.float32),
                                    volatile=not train)
             for name in ('c', 'h')}
-
-# one of K conversion
 
 # evaluation
 def evaluate(data, targets, test=False):
