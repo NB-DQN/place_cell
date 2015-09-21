@@ -10,11 +10,11 @@ class DatasetGenerator:
     def coordinate_id(self, coordinate=None):
         if coordinate is None:
             coordinate = self.current_coordinate
-        return coordinate[0] + coordinate[1] * self.size[1]
+        return coordinate[0] + coordinate[1] * self.size[0]
 
     def get_coordinate_from_id(self, cid):
-        x = cid % self.size[1]
-        y = (cid - x) / self.size[1]
+        x = cid % self.size[0]
+        y = (cid - x) / self.size[0]
         return (x, y)
 
     def visual_targets(self):
