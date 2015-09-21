@@ -35,7 +35,7 @@ offset_timing = 2
 # GPU
 parser = argparse.ArgumentParser()
 parser.add_argument('--gpu', '-g', default=-1, type=int,
-                    help='GPU ID (negative value indicates CPU)')                    
+                    help='GPU ID (negative value indicates CPU)')
 args = parser.parse_args()
 mod = cuda if args.gpu >= 0 else np
 
@@ -49,7 +49,7 @@ def generate_seq(seq_length, maze_size_x, maze_size_y):
     locations_1d = [] # 1D coorinate
 
     locations_1d.append(0)
-        
+
     current = (0, 0) # 2D coordinate
     for i in range(0, seq_length):
         direction_choice = [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]]
@@ -62,7 +62,7 @@ def generate_seq(seq_length, maze_size_x, maze_size_y):
         if current[1] == 0:
             direction_choice.remove([0, 0, 0, 1])
         direction = random.choice(direction_choice)
-        
+
         if   direction == [1, 0, 0, 0]:
             current = (current[0] + 1, current[1]    )
         elif direction == [0, 1, 0, 0]:
@@ -74,7 +74,7 @@ def generate_seq(seq_length, maze_size_x, maze_size_y):
 
         directions.append(direction)
         locations_1d.append(current[0]+current[1]*maze_size_x)
-        
+
     # directions = np.array(directions, dtype='float32')
     # locations_1d = np.array(locations_1d, dtype='int32')
     return directions, locations_1d
@@ -83,10 +83,10 @@ def generate_seq(seq_length, maze_size_x, maze_size_y):
 test_data, test_targets = generate_seq(100, maze_size_x, maze_size_y)
 
 # model
-f = open('pretrained_model_'+str(maze_size_x)+'_'+str(maze_size_y)+'_'+str(offset_timing)+'.pkl', 'rb')
+f = open('pi.pkl', 'rb')
 model =  pickle.load(f)
-f.close()       
-    
+f.close()
+
 # optimizer
 optimizer = optimizers.SGD(lr=1.)
 optimizer.setup(model.collect_parameters())
@@ -111,14 +111,14 @@ def make_initial_state(batchsize=batchsize, train=True):
                                              dtype=np.float32),
                                    volatile=not train)
             for name in ('c', 'h')}
-             
+
 # evaluation
 
 
 def evaluate(data, targets, test=False):
     sum_accuracy = mod.zeros(())
     state = make_initial_state(batchsize=1, train=False)
-    
+
     for i in six.moves.range(len(data)):
         one_hot_target = inilist = [0] * 81
         if targets[i] % offset_timing == 0:
