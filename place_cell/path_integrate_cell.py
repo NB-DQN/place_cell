@@ -1,6 +1,11 @@
 from place_cell import PlaceCell
 import os
 import chainer
+import chainer.functions as F
+import pickle
+import numpy as np
+
+import matplotlib.pyplot as plt
 
 class PathIntegrateCell(PlaceCell):
     def __init__(self, size):
@@ -8,13 +13,15 @@ class PathIntegrateCell(PlaceCell):
         self.virtual_coordinate = (0, 0)
         self.history = []
 
-        f = open('pretrained_model_'+str(size[0])+'_'+str(size[1])+'.pkl', 'rb')
+        dirname = os.path.dirname(__file__)
+        filename = os.path.join(dirname, 'pi.pkl')
+        f = open(filename, 'rb')
         self.pretrained_model =  pickle.load(f)
         f.close()
 
         self.state = self.make_initial_state(batchsize=1, train=False)
 
-    def make_initial_state(batchsize=1, train=True):
+    def make_initial_state(self, batchsize=1, train=True):
         return { name: chainer.Variable(np.zeros((batchsize, 25), dtype=np.float32), volatile=not train) for name in ('c', 'h') }
 
     def neighbor(self, action):
@@ -30,7 +37,8 @@ class PathIntegrateCell(PlaceCell):
         return 0 <= coordinate[0] < self.environment_size[0] and \
                0 <= coordinate[1] < self.environment_size[1]
 
-    def move(self, action):
+    def move(self, action, precise_coordinate):
+        print(self.virtual_coordinate)
         if   action == 0:
             action = [1, 0, 0, 0]
         elif action == 1:
@@ -40,21 +48,28 @@ class PathIntegrateCell(PlaceCell):
         elif action == 3:
             action = [0, 0, 0, 1]
 
-        data = np.array([[0] * 81 + action], dtype='float32')
+        coordinate_one_hot = [0] * 81
+        if isinstance(precise_coordinate, tuple): # and (precise_coordinate[0] + precise_coordinate[1]) % 2 == 0:
+            coordinate_one_hot[precise_coordinate[0] + precise_coordinate[1] * self.environment_size[0]] = 1
+        data = np.array([action + coordinate_one_hot], dtype='float32')
         x = chainer.Variable(data, volatile=True)
         h_in = self.pretrained_model.x_to_h(x) + self.pretrained_model.h_to_h(self.state['h'])
         c, h = F.lstm(self.state['c'], h_in)
-        y = self.pretrained_model.h_to_y(h)
         self.state = {'c': c, 'h': h}
+
+        y = self.pretrained_model.h_to_y(h)
         exp_y = np.exp(y.data[0], out=y.data[0])
-        softmax_y = exp_y / exp_y.sum(axis=1, keepdims=True)
+        softmax_y = exp_y / exp_y.sum(axis=0, keepdims=True)
         cid = softmax_y.argmax()
 
         self.history.append(cid)
 
-        self._DeterministicPlaceCell__check_novelty()
+        self._PathIntegrateCell__check_novelty()
 
         self.set_coordinate_id(cid)
+        print(self.virtual_coordinate)
+        print('')
+
 
     def __check_novelty(self):
         flag = False
