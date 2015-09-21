@@ -22,7 +22,7 @@ import chainer.functions as F
 from chainer import optimizers
 
 # set parameters
-n_epoch = 100000 # number of epochs
+n_epoch = 10000 # number of epochs
 n_units = 25 # number of units per layer, len(train)=5 -> 20 might be the best
 batchsize = 1 # minibatch size
 bprop_len = 1 # length of truncated BPTT
@@ -32,8 +32,7 @@ maze_size_x = 9
 maze_size_y = 9
 
 train_data_length = [20, 100]
-offset_timing = 3
-
+offset_timing =2
 
 # GPU
 parser = argparse.ArgumentParser()
@@ -55,23 +54,23 @@ def generate_seq(seq_length, maze_size_x, maze_size_y):
     for i in range(0, seq_length):
     	direction_choice = [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]] 
         if current[0] == 0:
-            direction_choice.remove([0, 0, 1, 0])
+            direction_choice.remove([0, 1, 0, 0])
         if current[0] == maze_size_x-1:
             direction_choice.remove([1, 0, 0, 0])
         if current[1] == 0:
             direction_choice.remove([0, 0, 0, 1])
         if current[1] == maze_size_y-1:
-            direction_choice.remove([0, 1, 0, 0])
+            direction_choice.remove([0, 0, 1, 0])
         direction = random.choice(direction_choice)            
         
-        if   direction == [0, 0, 1, 0]:
-            current = (current[0] - 1, current[1]    )
-        elif direction == [1, 0, 0, 0]:
+        if   direction == [1, 0, 0, 0]:
             current = (current[0] + 1, current[1]    )
+        elif direction == [0, 1, 0, 0]:
+            current = (current[0] - 1, current[1]    )
+        elif direction == [0, 0, 1, 0]:
+            current = (current[0]    , current[1] + 1)
         elif direction == [0, 0, 0, 1]:
             current = (current[0]    , current[1] - 1)
-        elif direction == [0, 1, 0, 0]:
-            current = (current[0]    , current[1] + 1)
         
         directions.append(direction)
         locations_1d.append(current[0]+current[1]*maze_size_x)
@@ -88,33 +87,33 @@ def generate_seq_remote(seq_length, maze_size_x, maze_size_y):
     for i in range(0, seq_length):
     	direction_choice = [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]] 
         if current[0] == 0:
-            direction_choice.remove([0, 0, 1, 0])
+            direction_choice.remove([0, 1, 0, 0])
         if current[0] == maze_size_x-1:
             direction_choice.remove([1, 0, 0, 0])
         if current[1] == 0:
             direction_choice.remove([0, 0, 0, 1])
         if current[1] == maze_size_y-1:
-            direction_choice.remove([0, 1, 0, 0])
+            direction_choice.remove([0, 0, 1, 0])
           
         if current[0] == 4 and current[1] <= 4:
             threshold = 0.2
             if random.random() > threshold:
-                direction_choice.remove([0, 0, 1, 0])                    
+                direction_choice.remove([0, 1, 0, 0])
         if current[1] == 4 and current[0] <= 4:
             threshold = 0.2
             if random.random() > threshold:
-                direction_choice.remove([0, 0, 0, 1])  
+                direction_choice.remove([0, 0, 0, 1])
             
         direction = random.choice(direction_choice)       
             
-        if   direction == [0, 0, 1, 0]:
-            current = (current[0] - 1, current[1]    )
-        elif direction == [1, 0, 0, 0]:
+        if   direction == [1, 0, 0, 0]:
             current = (current[0] + 1, current[1]    )
+        elif direction == [0, 1, 0, 0]:
+            current = (current[0] - 1, current[1]    )
+        elif direction == [0, 0, 1, 0]:
+            current = (current[0]    , current[1] + 1)
         elif direction == [0, 0, 0, 1]:
             current = (current[0]    , current[1] - 1)
-        elif direction == [0, 1, 0, 0]:
-            current = (current[0]    , current[1] + 1)
         
         directions.append(direction)
         locations_1d.append(current[0]+current[1]*maze_size_x)
@@ -172,7 +171,7 @@ def evaluate(data, targets, test=False):
     
     for i in six.moves.range(len(targets)):
         one_hot_target = inilist = [0] * 81
-        if targets[i] % offset_timing == 0:
+        if targets[i] % 2 == 0: 
             one_hot_target[targets[i]] = 1
         x_batch = mod.array([data[i] + one_hot_target], dtype = 'float32')
         t_batch = mod.array([targets[i]], dtype = 'int32')
@@ -215,7 +214,7 @@ for loop in range(len(train_data_length)):
         
             # forward propagation
             one_hot_target = inilist = [0] * 81
-            if train_targets[i] % offset_timing == 0:
+            if  train_targets[i] % 2 == 0:
                 one_hot_target[train_targets[i]] = 1
             x_batch = mod.array([train_data[i] + one_hot_target], dtype = 'float32')
             t_batch = mod.array([train_targets[i]], dtype = 'int32')            
@@ -256,7 +255,7 @@ for loop in range(len(train_data_length)):
         epoch += 1  
         
         # save the model    
-        f = open('pretrained_model_'+str(maze_size_x)+'_'+str(maze_size_y)+'.pkl', 'wb')
+        f = open('pretrained_model_'+str(maze_size_x)+'_'+str(maze_size_y)+'_'+str(offset_timing)+'.pkl', 'wb')
         pickle.dump(model, f, 2)
         f.close()      
                     

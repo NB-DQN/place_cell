@@ -30,7 +30,7 @@ valid_len = n_epoch // 50 # 1000 # epoch on which accuracy and perp are calculat
 grad_clip = 5 # gradient norm threshold to clip
 maze_size_x = 9
 maze_size_y = 9
-offset_timing = 3
+offset_timing = 4
 
 # GPU
 parser = argparse.ArgumentParser()
@@ -81,7 +81,7 @@ def generate_seq(seq_length, maze_size_x, maze_size_y):
 test_data, test_targets = generate_seq(100, maze_size_x, maze_size_y)
 
 # model
-f = open('pretrained_model_'+str(maze_size_x)+'_'+str(maze_size_y)+'.pkl', 'rb')
+f = open('pretrained_model_'+str(maze_size_x)+'_'+str(maze_size_y)+'_'+str(offset_timing)+'.pkl', 'rb')
 model =  pickle.load(f)
 f.close()       
     
@@ -119,7 +119,8 @@ def evaluate(data, targets, test=False):
     
     for i in six.moves.range(len(targets)):
         one_hot_target = inilist = [0] * 81
-        if targets[i] % offset_timing == 0:
+            #if targets[i] % offset_timing == 0:
+        if  targets[i] % 2 == 0 and targets[i] // 9 % 2 == 0:
             one_hot_target[targets[i]] = 1
         x_batch = mod.array([data[i] + one_hot_target], dtype = 'float32')
         t_batch = mod.array([targets[i]], dtype = 'int32')
