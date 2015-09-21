@@ -26,11 +26,11 @@ class DeterministicPlaceCell(PlaceCell):
         return self._DeterministicPlaceCell__check_steps(step)
 
     def coordinate_id(self):
-        return self.virtual_coordinate[0] + self.virtual_coordinate[1] * self.environment_size[1]
+        return self.virtual_coordinate[0] + self.virtual_coordinate[1] * self.environment_size[0]
 
     def set_coordinate_id(self, coordinate_id):
-        new_x = coordinate_id % self.environment_size[1]
-        new_y = (coordinate_id - new_x) / self.environment_size[1]
+        new_x = coordinate_id % self.environment_size[0]
+        new_y = (coordinate_id - new_x) / self.environment_size[0]
         self.virtual_coordinate = (new_x, new_y)
 
     def __check_novelty(self):
