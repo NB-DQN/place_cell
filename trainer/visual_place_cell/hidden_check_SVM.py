@@ -45,9 +45,7 @@ print('')
 X_train, X_test, y_train, y_test = train_test_split(input_data, output_data)
 
 # parameters
-tuned_parameters = [{'kernel': ['rbf'], 'gamma': [1e-3, 1e-4],
-                     'C': [1, 10, 100, 1000]},
-                    {'kernel': ['linear'], 'C': [1, 10, 100, 1000]}]
+tuned_parameters = [{'kernel': ['linear'], 'C': [1, 10, 100, 1000]}]
 
 # scores = ['accuracy', 'precision', 'recall']
 score = 'accuracy'
