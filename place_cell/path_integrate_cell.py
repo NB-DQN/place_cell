@@ -13,8 +13,9 @@ class PathIntegrateCell(PlaceCell):
         self.virtual_coordinate = (0, 0)
         self.history = []
 
+        self.offset = 2
         dirname = os.path.dirname(__file__)
-        filename = os.path.join(dirname, 'pi.pkl')
+        filename = os.path.join(dirname, 'pi' + str(self.offset) + '.pkl')
         f = open(filename, 'rb')
         self.pretrained_model =  pickle.load(f)
         f.close()
@@ -38,7 +39,6 @@ class PathIntegrateCell(PlaceCell):
                0 <= coordinate[1] < self.environment_size[1]
 
     def move(self, action, precise_coordinate):
-        print(self.virtual_coordinate)
         if   action == 0:
             action = [1, 0, 0, 0]
         elif action == 1:
@@ -49,8 +49,14 @@ class PathIntegrateCell(PlaceCell):
             action = [0, 0, 0, 1]
 
         coordinate_one_hot = [0] * 81
-        if isinstance(precise_coordinate, tuple): # and (precise_coordinate[0] + precise_coordinate[1]) % 2 == 0:
-            coordinate_one_hot[precise_coordinate[0] + precise_coordinate[1] * self.environment_size[0]] = 1
+        if isinstance(precise_coordinate, tuple):
+            current_cid = precise_coordinate[0] + self.environment_size[0] * precise_coordinate[1]
+            if current_cid % self.offset == 0 and (self.offset == 2 or (self.offset == 4 and current_cid // self.environment_size[0] % self.offset == 0)):
+                coordinate_one_hot[current_cid] = 1
+        else:
+            current_cid = self.virtual_coordinate[0] + self.virtual_coordinate[1] * self.environment_size[0]
+            if current_cid % self.offset == 0 and (self.offset == 2 or (self.offset == 4 and current_cid // self.environment_size[0] % self.offset == 0)):
+                coordinate_one_hot[current_cid] = 1
         data = np.array([action + coordinate_one_hot], dtype='float32')
         x = chainer.Variable(data, volatile=True)
         h_in = self.pretrained_model.x_to_h(x) + self.pretrained_model.h_to_h(self.state['h'])
@@ -62,23 +68,16 @@ class PathIntegrateCell(PlaceCell):
         softmax_y = exp_y / exp_y.sum(axis=0, keepdims=True)
         cid = softmax_y.argmax()
 
-        self.history.append(cid)
-
         self._PathIntegrateCell__check_novelty()
-
         self.set_coordinate_id(cid)
-        print(self.virtual_coordinate)
-        print('')
 
+        return True
 
     def __check_novelty(self):
-        flag = False
         for cid in self.history:
-            if cid == self.coordinate_id():
-                flag = True
+            if self.coordinate_id() == cid:
+                self.novelty = 0
                 break
-        if flag:
-            self.novelty = 0
         else:
             self.novelty = 10
             self.history.append(self.coordinate_id())
