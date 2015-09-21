@@ -51,24 +51,24 @@ def generate_seq(seq_length, maze_size_x, maze_size_y):
     current = (0, 0) # 2D coordinate
     for i in range(0, seq_length):
         direction_choice = [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]]
-        if current[0] == 0:
-            direction_choice.remove([0, 0, 1, 0])
         if current[0] == maze_size_x-1:
             direction_choice.remove([1, 0, 0, 0])
+        if current[0] == 0:
+            direction_choice.remove([0, 1, 0, 0])
+        if current[1] == maze_size_y-1:
+            direction_choice.remove([0, 0, 1, 0])
         if current[1] == 0:
             direction_choice.remove([0, 0, 0, 1])
-        if current[1] == maze_size_y-1:
-            direction_choice.remove([0, 1, 0, 0])
         direction = random.choice(direction_choice)
         
-        if   direction == [0, 0, 1, 0]:
-            current = (current[0] - 1, current[1]    )
-        elif direction == [1, 0, 0, 0]:
+        if   direction == [1, 0, 0, 0]:
             current = (current[0] + 1, current[1]    )
+        elif direction == [0, 1, 0, 0]:
+            current = (current[0] - 1, current[1]    )
+        elif direction == [0, 0, 1, 0]:
+            current = (current[0]    , current[1] + 1)
         elif direction == [0, 0, 0, 1]:
             current = (current[0]    , current[1] - 1)
-        elif direction == [0, 1, 0, 0]:
-            current = (current[0]    , current[1] + 1)
 
         directions.append(direction)
         locations_1d.append(current[0]+current[1]*maze_size_x)
