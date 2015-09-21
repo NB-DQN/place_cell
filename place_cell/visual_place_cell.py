@@ -7,24 +7,29 @@ import numpy as np
 
 import matplotlib.pyplot as plt
 
-class PathIntegrateCell(PlaceCell):
+class VisualPlaceCell(PlaceCell):
     def __init__(self, size):
         self.environment_size = size
         self.virtual_coordinate = (0, 0)
         self.history = []
 
-        self.offset = 2
         dirname = os.path.dirname(__file__)
-        filename = os.path.join(dirname, 'pi' + str(self.offset) + '.pkl')
+        filename = os.path.join(dirname, 'vpc_rnn.pkl')
         f = open(filename, 'rb')
         self.pretrained_model =  pickle.load(f)
         f.close()
 
         self.state = self.make_initial_state(batchsize=1, train=False)
-        self.filter = [0] * 81
+
+        filename = os.path.join(dirname, 'vpc_svm.pkl')
+        f = open(filename, 'rb')
+        self.clf =  pickle.load(f)
+        f.close()
+
+        self.predicted_visual_image = np.array([0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1])
 
     def make_initial_state(self, batchsize=1, train=True):
-        return { name: chainer.Variable(np.zeros((batchsize, 25), dtype=np.float32), volatile=not train) for name in ('c', 'h') }
+        return { name: chainer.Variable(np.zeros((batchsize, 81), dtype=np.float32), volatile=not train) for name in ('c', 'h') }
 
     def neighbor(self, action):
         neighbors = [ \
@@ -39,7 +44,7 @@ class PathIntegrateCell(PlaceCell):
         return 0 <= coordinate[0] < self.environment_size[0] and \
                0 <= coordinate[1] < self.environment_size[1]
 
-    def move(self, action, precise_coordinate):
+    def move(self, action, visual_image):
         if   action == 0:
             action = [1, 0, 0, 0]
         elif action == 1:
@@ -49,27 +54,21 @@ class PathIntegrateCell(PlaceCell):
         elif action == 3:
             action = [0, 0, 0, 1]
 
-        coordinate_one_hot = [0] * 81
-        if isinstance(precise_coordinate, tuple):
-            current_cid = precise_coordinate[0] + self.environment_size[0] * precise_coordinate[1]
-            if current_cid % self.offset == 0 and (self.offset == 2 or (self.offset == 4 and current_cid // self.environment_size[0] % self.offset == 0)):
-                coordinate_one_hot[current_cid] = 1
+        if isinstance(visual_image, int):
+            data = np.array([action + self.predicted_visual_image.tolist()], dtype='float32')
         else:
-            current_cid = self.virtual_coordinate[0] + self.virtual_coordinate[1] * self.environment_size[0]
-            if current_cid % self.offset == 0 and (self.offset == 2 or (self.offset == 4 and current_cid // self.environment_size[0] % self.offset == 0)):
-                coordinate_one_hot[current_cid] = 1
-        data = np.array([action + coordinate_one_hot], dtype='float32')
+            data = np.array([action + visual_image.tolist()], dtype='float32')
         x = chainer.Variable(data, volatile=True)
         h_in = self.pretrained_model.x_to_h(x) + self.pretrained_model.h_to_h(self.state['h'])
         c, h = F.lstm(self.state['c'], h_in)
         self.state = {'c': c, 'h': h}
 
         y = self.pretrained_model.h_to_y(h)
-        exp_y = np.exp(y.data[0], out=y.data[0])
-        softmax_y = exp_y / exp_y.sum(axis=0, keepdims=True)
-        cid = softmax_y.argmax()
+        sigmoid_y = 1 / (1 + np.exp(-y.data))
+        self.predicted_visual_image = np.round((np.sign(sigmoid_y - 0.5) + 1) / 2)[0]
 
-        self._PathIntegrateCell__check_novelty()
+        cid = self.hidden_to_coordinates(h.data[0])
+        self._VisualPlaceCell__check_novelty()
         self.set_coordinate_id(cid)
 
         return True
@@ -92,3 +91,7 @@ class PathIntegrateCell(PlaceCell):
         new_x = coordinate_id % self.environment_size[0]
         new_y = (coordinate_id - new_x) / self.environment_size[0]
         self.virtual_coordinate = (new_x, new_y)
+
+    def hidden_to_coordinates(self, hidden):
+        return self.clf.predict(hidden)[0]
+

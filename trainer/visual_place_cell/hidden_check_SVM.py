@@ -1,4 +1,5 @@
 # linkage of hidden outputs (test_hh) and coorinates (test_data['coordinates'])
+
 import argparse
 import math
 import sys
@@ -44,9 +45,7 @@ print('')
 X_train, X_test, y_train, y_test = train_test_split(input_data, output_data)
 
 # parameters
-tuned_parameters = [{'kernel': ['rbf'], 'gamma': [1e-3, 1e-4],
-                     'C': [1, 10, 100, 1000]},
-                    {'kernel': ['linear'], 'C': [1, 10, 100, 1000]}]
+tuned_parameters = [{'kernel': ['linear'], 'C': [1, 10, 100, 1000]}]
 
 # scores = ['accuracy', 'precision', 'recall']
 score = 'accuracy'
@@ -83,6 +82,12 @@ print("Confusion martix")
 
 print(confusion_matrix(y_true, y_pred))
 
+# save the model as pkl
+f = open('SVM_model.pkl', 'wb')
+pickle.dump(clf, f, 2)
+f.close()  
+
+
 
 # for fixed C, gamma and kernel
 # C = 1.
@@ -93,3 +98,5 @@ print(confusion_matrix(y_true, y_pred))
 # classifier = OneVsRestClassifier(estimator)
 # classifier.fit(train_x, train_y)
 # pred_y = classifier.predict(test_x)
+
+
