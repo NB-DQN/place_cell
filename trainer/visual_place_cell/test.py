@@ -20,6 +20,7 @@ import chainer
 from chainer import cuda
 import chainer.functions as F
 from chainer import optimizers
+from chainer import computational_graph as c
 
 from dataset_generator import DatasetGenerator
 
@@ -47,9 +48,11 @@ mod = cuda.cupy if args.gpu >= 0 else np
 dg = DatasetGenerator(maze_size)
 
 # test dataset
-test_data = dg.generate_seq(100)
+def generate_test_dataset():
+    return dg.generate_seq(100)
 
 # model
+test_data = generate_test_dataset()
 f = open('pretrained_model_'+str(maze_size[0])+'_'+str(maze_size[1])+'.pkl', 'rb')
 model =  pickle.load(f)
 f.close()
@@ -96,24 +99,23 @@ def evaluate(data, test=False):
 
     hh = []
 
-    for i in six.moves.range(len(data['input'])):
+    for i in range(len(data['input'])):
         x_batch = mod.asarray([data['input'][i]], dtype = 'float32')
         t_batch = mod.asarray([data['output'][i]], dtype = 'int32')
         state, loss, accuracy, bin_y, h_raw = forward_one_step(x_batch, t_batch, state, train=False)
+        
         hh.append(h_raw)
+        
         sum_accuracy += accuracy
         if test == True:
             pass
             # print('{} Target: ({}, {})'.format(accuracy, t_batch[0] % maze_size[0],
             #    t_batch[0] // maze_size[0]))
 
-        break
-
             # print('c: {}, h: {}'.format(state['c'].data, state['h'].data)) # show the hidden states
-    return cuda.to_cpu(sum_accuracy)
+    return cuda.to_cpu(sum_accuracy), hh
 
 # Evaluate on test dataset
-print('[test]')
-test_perp = evaluate(test_data, test=True)
-print('test classified: {}/{}'.format(test_perp, len(test_data)))
-
+# print('[test]')
+# test_perp, test_hh = evaluate(test_data, test=True)
+# print('test classified: {}'.format(test_perp))
