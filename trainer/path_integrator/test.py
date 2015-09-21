@@ -30,7 +30,7 @@ valid_len = n_epoch // 50 # 1000 # epoch on which accuracy and perp are calculat
 grad_clip = 5 # gradient norm threshold to clip
 maze_size_x = 9
 maze_size_y = 9
-offset_timing = 2
+offset_timing = 3
 
 # GPU
 parser = argparse.ArgumentParser()
