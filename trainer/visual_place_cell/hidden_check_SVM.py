@@ -1,4 +1,5 @@
 # linkage of hidden outputs (test_hh) and coorinates (test_data['coordinates'])
+
 import argparse
 import math
 import sys
@@ -83,6 +84,12 @@ print("Confusion martix")
 
 print(confusion_matrix(y_true, y_pred))
 
+# save the model as pkl
+f = open('SVM_model.pkl', 'wb')
+pickle.dump(clf, f, 2)
+f.close()  
+
+
 
 # for fixed C, gamma and kernel
 # C = 1.
@@ -93,3 +100,5 @@ print(confusion_matrix(y_true, y_pred))
 # classifier = OneVsRestClassifier(estimator)
 # classifier.fit(train_x, train_y)
 # pred_y = classifier.predict(test_x)
+
+
