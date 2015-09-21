@@ -49,6 +49,8 @@ output target: coordinate (converted to 1D)
 def generate_seq(seq_length, maze_size_x, maze_size_y):
     directions = []
     locations_1d = [] # 1D coorinate
+    
+    locations_1d.append(0)
 
     current = (0, 0) # 2D coordinate
     for i in range(0, seq_length):
@@ -82,6 +84,8 @@ def generate_seq(seq_length, maze_size_x, maze_size_y):
 def generate_seq_remote(seq_length, maze_size_x, maze_size_y):
     directions = []
     locations_1d = [] # 1D coorinate
+    
+    locations_1d.append(0)
 
     current = (0, 0) # 2D coordinate
     for i in range(0, seq_length):
@@ -169,12 +173,12 @@ def evaluate(data, targets, test=False):
     sum_accuracy = mod.zeros(())
     state = make_initial_state(batchsize=1, train=False)
     
-    for i in six.moves.range(len(targets)):
+    for i in six.moves.range(len(data)):
         one_hot_target = inilist = [0] * 81
         if targets[i] % 2 == 0: 
             one_hot_target[targets[i]] = 1
         x_batch = mod.array([data[i] + one_hot_target], dtype = 'float32')
-        t_batch = mod.array([targets[i]], dtype = 'int32')
+        t_batch = mod.array([targets[i + 1]], dtype = 'int32')
         state, loss, accuracy = forward_one_step(x_batch, t_batch, state, train=False)
         sum_accuracy += accuracy.data
         if test == True:
@@ -217,7 +221,7 @@ for loop in range(len(train_data_length)):
             if  train_targets[i] % 2 == 0:
                 one_hot_target[train_targets[i]] = 1
             x_batch = mod.array([train_data[i] + one_hot_target], dtype = 'float32')
-            t_batch = mod.array([train_targets[i]], dtype = 'int32')            
+            t_batch = mod.array([train_targets[i + 1]], dtype = 'int32')
             
             state, loss_i, acc_i = forward_one_step(x_batch, t_batch, state)
             accum_loss += loss_i
