@@ -7,8 +7,6 @@ import numpy as np
 
 import matplotlib.pyplot as plt
 
-from deterministic_place_cell import DeterministicPlaceCell
-
 class VisualPlaceCell(PlaceCell):
     def __init__(self, size):
         self.environment_size = size
@@ -30,8 +28,6 @@ class VisualPlaceCell(PlaceCell):
 
         self.predicted_visual_image = np.array([0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1])
 
-        self.det_cell = DeterministicPlaceCell((9, 9))
-
     def make_initial_state(self, batchsize=1, train=True):
         return { name: chainer.Variable(np.zeros((batchsize, 81), dtype=np.float32), volatile=not train) for name in ('c', 'h') }
 
@@ -49,7 +45,6 @@ class VisualPlaceCell(PlaceCell):
                0 <= coordinate[1] < self.environment_size[1]
 
     def move(self, action, visual_image):
-        self.det_cell.move(action, 0)
         if   action == 0:
             action = [1, 0, 0, 0]
         elif action == 1:
@@ -76,22 +71,13 @@ class VisualPlaceCell(PlaceCell):
         self._VisualPlaceCell__check_novelty()
         self.set_coordinate_id(cid)
 
-        # if self.coordinate_id() == self.det_cell.coordinate_id():
-        #     print('T')
-        # else:
-        #     print('===================================================')
-        #     print('F')
-        #     print(self.virtual_coordinate)
-        #     print(self.det_cell.virtual_coordinate)
+        return True
 
     def __check_novelty(self):
-        flag = False
         for cid in self.history:
-            if cid == self.coordinate_id():
-                flag = True
+            if self.coordinate_id() == cid:
+                self.novelty = 0
                 break
-        if flag:
-            self.novelty = 0
         else:
             self.novelty = 10
             self.history.append(self.coordinate_id())
