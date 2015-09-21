@@ -7,9 +7,6 @@ class NeuralPlaceCell(PlaceCell):
     def validate_action(self, action):
         pass
 
-    def virtual_move(self, action):
-        self.move(action)
-
     def move(self, action):
         pass
 
