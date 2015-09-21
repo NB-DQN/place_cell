@@ -20,6 +20,7 @@ class PathIntegrateCell(PlaceCell):
         f.close()
 
         self.state = self.make_initial_state(batchsize=1, train=False)
+        self.filter = [0] * 81
 
     def make_initial_state(self, batchsize=1, train=True):
         return { name: chainer.Variable(np.zeros((batchsize, 25), dtype=np.float32), volatile=not train) for name in ('c', 'h') }
@@ -62,7 +63,6 @@ class PathIntegrateCell(PlaceCell):
         softmax_y = exp_y / exp_y.sum(axis=0, keepdims=True)
         cid = softmax_y.argmax()
 
-        self.history.append(cid)
 
         self._PathIntegrateCell__check_novelty()
 
@@ -70,18 +70,17 @@ class PathIntegrateCell(PlaceCell):
         print(self.virtual_coordinate)
         print('')
 
-
     def __check_novelty(self):
-        flag = False
         for cid in self.history:
-            if cid == self.coordinate_id():
-                flag = True
-                break
-        if flag:
-            self.novelty = 0
-        else:
-            self.novelty = 10
-            self.history.append(self.coordinate_id())
+            output = [0] * 81
+            output[cid] = 1
+            if output[cid] ==1 and filter[cid] == 0:
+                self.novelty = 10
+                self.history.append(self.coordinate_id())
+            else:
+                self.novelty = 0
+            filter[cid] = 1
+
 
     def coordinate_id(self):
         return self.virtual_coordinate[0] + self.virtual_coordinate[1] * self.environment_size[0]
