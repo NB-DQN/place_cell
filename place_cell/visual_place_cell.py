@@ -25,7 +25,7 @@ class VisualPlaceCell(PlaceCell):
         self.predicted_visual_image = np.array([0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1])
 
     def make_initial_state(self, batchsize=1, train=True):
-        return { name: chainer.Variable(np.zeros((batchsize, 81), dtype=np.float32), volatile=not train) for name in ('c', 'h') }
+        return { name: chainer.Variable(np.zeros((batchsize, 40), dtype=np.float32), volatile=not train) for name in ('c', 'h') }
 
     def neighbor(self, action):
         neighbors = [ \
