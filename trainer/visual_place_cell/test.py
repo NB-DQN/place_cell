@@ -29,7 +29,7 @@ import matplotlib.pyplot as plt
 # set parameters
 n_epoch = 100000 # number of epochs
 
-n_units = 40 # number of units per layer, len(train)=5 -> 20 might be the best
+n_units = 81 # number of units per layer, len(train)=5 -> 20 might be the best
 batchsize = 1 # minibatch size
 bprop_len = 1 # length of truncated BPTT
 valid_len = n_epoch // 100 # 1000 # epoch on which accuracy and perp are calculated

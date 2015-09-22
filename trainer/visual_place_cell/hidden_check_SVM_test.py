@@ -17,9 +17,9 @@ from sklearn.metrics import classification_report, confusion_matrix
 from sklearn.svm import SVC
 from sklearn.multiclass import OneVsRestClassifier
 
-ev_iterations = 100
+ev_iterations = 10000
 
-n_units = 40
+n_units = 81
 
 print(' ')
 print('number of hidden units: ' + str(n_units))
@@ -45,7 +45,7 @@ for i in range(len(test_data_stack)):
 print('')
 
 # data allocation
-X_train, X_test, y_train, y_test = train_test_split(input_data, output_data)
+# X_train, X_test, y_train, y_test = train_test_split(input_data, output_data)
 
 # parameters
 tuned_parameters = [{'kernel': ['linear'], 'C': [1, 10, 100, 1000]}]
@@ -61,19 +61,10 @@ C = 1.
 kernel = 'linear'
 gamma  = 0.01
 
-estimator = SVC(C=C, kernel=kernel, gamma=gamma)
-classifier = OneVsRestClassifier(estimator)
-classifier.fit(X_train, y_train)
-pred_train = classifier.predict(X_train)
-pred_test = classifier.predict(X_test)
+#load
+f = open('SVM_model_' + str(n_units) + '.pkl', 'rb')
+classifier =  pickle.load(f)
+f.close()
 
-print(classification_report(y_train, pred_train))
-print(classification_report(y_test, pred_test))
-
-# save the model as pkl
-f = open('SVM_model_' + str(n_units) + '_nongridsearch.pkl', 'wb')
-pickle.dump(classifier, f, 2)
-f.close()  
-
-
-
+pred = classifier.predict(input_data)
+print(classification_report(output_data, pred))
