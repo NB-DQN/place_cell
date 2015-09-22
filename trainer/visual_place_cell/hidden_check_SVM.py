@@ -1,8 +1,5 @@
 # linkage of hidden outputs (test_hh) and coorinates (test_data['coordinates'])
 
-n_units = 20
-
-
 import argparse
 import math
 import sys
@@ -20,6 +17,12 @@ from sklearn.metrics import classification_report, confusion_matrix
 from sklearn.svm import SVC
 
 ev_iterations = 100
+
+n_units = 40
+
+print(' ')
+print('number of hidden units: ' + str(n_units))
+print(' ')
 
 test_data_stack = []
 test_hh_stack = []

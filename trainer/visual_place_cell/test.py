@@ -6,8 +6,6 @@ LSTM with one hidden layer
 I don't know if truncated BPTT or gradient clip are necessary here
 """
 
-n_units = 20 # number of units per layer, len(train)=5 -> 20 might be the best
-
 import argparse
 import math
 import sys
@@ -30,6 +28,8 @@ import matplotlib.pyplot as plt
 
 # set parameters
 n_epoch = 100000 # number of epochs
+
+n_units = 40 # number of units per layer, len(train)=5 -> 20 might be the best
 batchsize = 1 # minibatch size
 bprop_len = 1 # length of truncated BPTT
 valid_len = n_epoch // 100 # 1000 # epoch on which accuracy and perp are calculated
