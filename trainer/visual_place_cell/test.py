@@ -6,6 +6,8 @@ LSTM with one hidden layer
 I don't know if truncated BPTT or gradient clip are necessary here
 """
 
+n_units = 20 # number of units per layer, len(train)=5 -> 20 might be the best
+
 import argparse
 import math
 import sys
@@ -28,7 +30,6 @@ import matplotlib.pyplot as plt
 
 # set parameters
 n_epoch = 100000 # number of epochs
-n_units = 81 # number of units per layer, len(train)=5 -> 20 might be the best
 batchsize = 1 # minibatch size
 bprop_len = 1 # length of truncated BPTT
 valid_len = n_epoch // 100 # 1000 # epoch on which accuracy and perp are calculated
@@ -36,6 +37,9 @@ grad_clip = 5 # gradient norm threshold to clip
 maze_size = (9, 9)
 
 train_data_length = [20, 100]
+
+print('number of hidden units: ' + str(n_units))
+print(' ')
 
 # GPU
 parser = argparse.ArgumentParser()
@@ -53,7 +57,7 @@ def generate_test_dataset():
 
 # model
 test_data = generate_test_dataset()
-f = open('pretrained_model_'+str(maze_size[0])+'_'+str(maze_size[1])+'.pkl', 'rb')
+f = open('pretrained_model_'+str(n_units)+'.pkl', 'rb')
 model =  pickle.load(f)
 f.close()
 if args.gpu >= 0:
