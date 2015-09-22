@@ -1,5 +1,8 @@
 # linkage of hidden outputs (test_hh) and coorinates (test_data['coordinates'])
 
+n_units = 20
+
+
 import argparse
 import math
 import sys
@@ -15,7 +18,6 @@ from sklearn.cross_validation import train_test_split
 from sklearn.grid_search import GridSearchCV
 from sklearn.metrics import classification_report, confusion_matrix
 from sklearn.svm import SVC
-from sklearn.metrics import confusion_matrix
 
 ev_iterations = 100
 
@@ -83,7 +85,7 @@ print("Confusion martix")
 print(confusion_matrix(y_true, y_pred))
 
 # save the model as pkl
-f = open('SVM_model.pkl', 'wb')
+f = open('SVM_model_' + str(n_units) + '.pkl', 'wb')
 pickle.dump(clf, f, 2)
 f.close()  
 
