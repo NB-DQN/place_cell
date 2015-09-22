@@ -1,4 +1,4 @@
-from path_integrate_cell import PathIntegrateCell
+from path_integrating_cell import PathIntegratingCell
 from visual_place_cell import VisualPlaceCell
 
 import numpy as np

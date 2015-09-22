@@ -5,7 +5,7 @@ import chainer.functions as F
 import pickle
 import numpy as np
 
-class PathIntegrateCell(PlaceCell):
+class PathIntegratingCell(PlaceCell):
     def __init__(self, size):
         super(PathIntegrateCell, self).__init__(size)
 
