@@ -22,7 +22,7 @@ from sklearn import metrics
 
 ev_iterations = 100
 
-n_units = 40
+n_units = 81
 
 print(' ')
 print('number of hidden units: ' + str(n_units))

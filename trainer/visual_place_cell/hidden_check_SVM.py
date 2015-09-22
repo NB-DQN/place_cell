@@ -36,9 +36,6 @@ for i in range(ev_iterations):
     
     test_data_stack.extend(test_data['coordinates'])
     test_hh_stack.extend(test_hh)
-   
-N_train = ev_iterations * 100 * 4 / 5
-N_test = ev_iterations * 100 / 5
 
 input_data = test_hh_stack
 output_data = []
