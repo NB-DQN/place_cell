@@ -17,7 +17,7 @@ from sklearn.metrics import classification_report, confusion_matrix
 from sklearn.svm import SVC
 from sklearn.metrics import confusion_matrix
 
-from sklearn.cluster import KMeans
+from sklearn.mixture import GMM
 from sklearn import metrics
 
 ev_iterations = 100
@@ -54,7 +54,7 @@ print('')
 X_train, X_test, y_train, y_test = train_test_split(input_data, output_data)
 
 # clustering
-classifier = KMeans(n_clusters=81) 
+classifier = GMM(n_components=81, init_params='wc', n_iter=20)
 classifier.fit(X_train)
 y_train_pred = classifier.predict(X_train) 
 
@@ -62,25 +62,3 @@ y_train_pred = classifier.predict(X_train)
 labels_list = zip(y_train, y_train_pred)
 labels_list.sort()
 print(labels_list)
-
-
-print(metrics.adjusted_rand_score(y_train, y_train_pred))
-
-# annotation label -> target
-# def annotator(labels):
-#     for data, target, label in zip(X_train, y_train, labels):
-#         print(label, target)
-
-# test
-# test_labels = kmeans_model.predict(X_test)
-# test_predicted = annotator(test_labels)
-
-# calculate accuracy
-# accuracy = 0
-# for i in range(len(test_predicted)):
-#     if test_predicted[i] == y_test[i]:
-#         accuracy += 1
-
-# accuracy /= len(test_predicted)
-
-# print(accuracy)

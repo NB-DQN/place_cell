@@ -38,8 +38,6 @@ maze_size = (9, 9)
 
 train_data_length = [20, 100]
 
-print('number of hidden units: ' + str(n_units))
-print(' ')
 
 # GPU
 parser = argparse.ArgumentParser()
