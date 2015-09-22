@@ -3,7 +3,7 @@ from visual_place_cell import VisualPlaceCell
 
 import numpy as np
 
-# c = PathIntegrateCell((9, 9))
+# c = PathIntegratingCell((9, 9))
 #
 # c.move(0, (0, 0))
 # c.move(1, (1, 0))

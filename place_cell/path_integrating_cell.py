@@ -7,7 +7,7 @@ import numpy as np
 
 class PathIntegratingCell(PlaceCell):
     def __init__(self, size):
-        super(PathIntegrateCell, self).__init__(size)
+        super(PathIntegratingCell, self).__init__(size)
 
         self.offset = 2
         dirname = os.path.dirname(__file__)
