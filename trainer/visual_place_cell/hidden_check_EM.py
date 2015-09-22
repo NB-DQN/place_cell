@@ -54,7 +54,7 @@ print('')
 X_train, X_test, y_train, y_test = train_test_split(input_data, output_data)
 
 # clustering
-classifier = GMM(n_components=81, init_params='wc', n_iter=20)
+classifier = GMM(n_components=81, n_iter=500, covariance_type='tied')
 classifier.fit(X_train)
 y_train_pred = classifier.predict(X_train) 
 
