@@ -5,13 +5,9 @@ import chainer.functions as F
 import pickle
 import numpy as np
 
-import matplotlib.pyplot as plt
-
 class VisualPlaceCell(PlaceCell):
     def __init__(self, size):
-        self.environment_size = size
-        self.virtual_coordinate = (0, 0)
-        self.history = []
+        super(VisualPlaceCell, self).__init__(size)
 
         dirname = os.path.dirname(__file__)
         filename = os.path.join(dirname, 'vpc_rnn.pkl')
@@ -44,7 +40,7 @@ class VisualPlaceCell(PlaceCell):
         return 0 <= coordinate[0] < self.environment_size[0] and \
                0 <= coordinate[1] < self.environment_size[1]
 
-    def move(self, action, visual_image):
+    def move(self, action, visual_image=None):
         if   action == 0:
             action = [1, 0, 0, 0]
         elif action == 1:
@@ -54,7 +50,7 @@ class VisualPlaceCell(PlaceCell):
         elif action == 3:
             action = [0, 0, 0, 1]
 
-        if isinstance(visual_image, int):
+        if visual_image is None:
             data = np.array([action + self.predicted_visual_image.tolist()], dtype='float32')
         else:
             data = np.array([action + visual_image.tolist()], dtype='float32')
@@ -68,21 +64,13 @@ class VisualPlaceCell(PlaceCell):
         self.predicted_visual_image = np.round((np.sign(sigmoid_y - 0.5) + 1) / 2)[0]
 
         cid = self.hidden_to_coordinates(h.data[0])
-        self._VisualPlaceCell__check_novelty()
         self.set_coordinate_id(cid)
 
-        return True
+        output = np.zeros(self.environment_size[0] * self.environment_size[1], dtype=np.bool)
+        output[self.coordinate_id()] = 1
+        self._PlaceCell__check_novelty(output)
 
-    def __check_novelty(self):
-        for cid in self.history:
-            output = [0] * 81
-            output[cid] = 1
-            if output[cid] ==1 and filter[cid] == 0:
-                self.novelty = 10
-                self.history.append(self.coordinate_id())
-            else:
-                self.novelty = 0
-            filter[cid] = 1
+        return True
 
     def coordinate_id(self):
         return self.virtual_coordinate[0] + self.virtual_coordinate[1] * self.environment_size[0]

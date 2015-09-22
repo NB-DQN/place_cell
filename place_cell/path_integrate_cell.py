@@ -5,13 +5,9 @@ import chainer.functions as F
 import pickle
 import numpy as np
 
-import matplotlib.pyplot as plt
-
 class PathIntegrateCell(PlaceCell):
     def __init__(self, size):
-        self.environment_size = size
-        self.virtual_coordinate = (0, 0)
-        self.history = []
+        super(PathIntegrateCell, self).__init__(size)
 
         self.offset = 2
         dirname = os.path.dirname(__file__)
@@ -21,7 +17,6 @@ class PathIntegrateCell(PlaceCell):
         f.close()
 
         self.state = self.make_initial_state(batchsize=1, train=False)
-        self.filter = [0] * 81
 
     def make_initial_state(self, batchsize=1, train=True):
         return { name: chainer.Variable(np.zeros((batchsize, 25), dtype=np.float32), volatile=not train) for name in ('c', 'h') }
@@ -39,7 +34,7 @@ class PathIntegrateCell(PlaceCell):
         return 0 <= coordinate[0] < self.environment_size[0] and \
                0 <= coordinate[1] < self.environment_size[1]
 
-    def move(self, action, precise_coordinate):
+    def move(self, action, precise_coordinate=None):
         if   action == 0:
             action = [1, 0, 0, 0]
         elif action == 1:
@@ -68,22 +63,13 @@ class PathIntegrateCell(PlaceCell):
         exp_y = np.exp(y.data[0], out=y.data[0])
         softmax_y = exp_y / exp_y.sum(axis=0, keepdims=True)
         cid = softmax_y.argmax()
-
-        self._PathIntegrateCell__check_novelty()
         self.set_coordinate_id(cid)
 
-        return True
+        output = np.zeros(self.environment_size[0] * self.environment_size[1], dtype=np.bool)
+        output[cid] = 1
+        self._PlaceCell__check_novelty(output)
 
-    def __check_novelty(self):
-        for cid in self.history:
-            output = [0] * 81
-            output[cid] = 1
-            if output[cid] ==1 and filter[cid] == 0:
-                self.novelty = 10
-                self.history.append(self.coordinate_id())
-            else:
-                self.novelty = 0
-            filter[cid] = 1
+        return True
 
     def coordinate_id(self):
         return self.virtual_coordinate[0] + self.virtual_coordinate[1] * self.environment_size[0]
