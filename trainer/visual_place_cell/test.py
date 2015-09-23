@@ -29,10 +29,10 @@ import matplotlib.pyplot as plt
 # set parameters
 n_epoch = 100000 # number of epochs
 
-n_units = 81 # number of units per layer, len(train)=5 -> 20 might be the best
+n_units = 60 # number of units per layer, len(train)=5 -> 20 might be the best
 batchsize = 1 # minibatch size
 bprop_len = 1 # length of truncated BPTT
-valid_len = n_epoch // 100 # 1000 # epoch on which accuracy and perp are calculated
+valid_len = n_epoch // 100 # 1000 # epoch on which error and perp are calculated
 grad_clip = 5 # gradient norm threshold to clip
 maze_size = (9, 9)
 
@@ -84,8 +84,9 @@ def forward_one_step(x, t, state, train=True):
     sigmoid_y = 1 / (1 + np.exp(-y.data))
     bin_y = np.round((np.sign(sigmoid_y - 0.5) + 1) / 2)
 
-    accuracy = ((t.data - sigmoid_y) ** 2).sum() / 60
-    return state, F.sigmoid_cross_entropy(y, t), accuracy, bin_y, h.data[0]
+    error = ((t.data - sigmoid_y) ** 2).sum() / 60
+    bin_y_error = ((t.data - bin_y) ** 2).sum() / 60
+    return state, F.sigmoid_cross_entropy(y, t), error, bin_y_error, h.data[0]
 
 # initialize hidden state
 def make_initial_state(batchsize=batchsize, train=True):
@@ -96,28 +97,31 @@ def make_initial_state(batchsize=batchsize, train=True):
 
 # evaluation
 def evaluate(data, test=False):
-    sum_accuracy = mod.zeros(())
+    sum_error = mod.zeros(())
     state = make_initial_state(batchsize=1, train=False)
 
     hh = []
+    bin_y_error_sum = 0.0
 
     for i in range(len(data['input'])):
         x_batch = mod.asarray([data['input'][i]], dtype = 'float32')
         t_batch = mod.asarray([data['output'][i]], dtype = 'int32')
-        state, loss, accuracy, bin_y, h_raw = forward_one_step(x_batch, t_batch, state, train=False)
+        state, loss, error, bin_y_error, h_raw = forward_one_step(x_batch, t_batch, state, train=False)
         
         hh.append(h_raw)
+        bin_y_error_sum += bin_y_error
         
-        sum_accuracy += accuracy
+        sum_error += error
         if test == True:
             pass
-            # print('{} Target: ({}, {})'.format(accuracy, t_batch[0] % maze_size[0],
+            # print('{} Target: ({}, {})'.format(error, t_batch[0] % maze_size[0],
             #    t_batch[0] // maze_size[0]))
 
             # print('c: {}, h: {}'.format(state['c'].data, state['h'].data)) # show the hidden states
-    return cuda.to_cpu(sum_accuracy), hh
+    return cuda.to_cpu(sum_error), hh, bin_y_error
 
 # Evaluate on test dataset
-# print('[test]')
-# test_perp, test_hh = evaluate(test_data, test=True)
-# print('test classified: {}'.format(test_perp))
+print('[test]')
+test_data = generate_test_dataset()
+test_perp, test_hh, test_error = evaluate(test_data, test=True)
+print('test classified: {}'.format(test_error/(60*100)))

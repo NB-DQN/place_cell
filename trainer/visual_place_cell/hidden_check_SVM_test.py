@@ -17,9 +17,9 @@ from sklearn.metrics import classification_report, confusion_matrix
 from sklearn.svm import SVC
 from sklearn.multiclass import OneVsRestClassifier
 
-ev_iterations = 10000
+ev_iterations = 1000
 
-n_units = 81
+n_units = 40
 
 print(' ')
 print('number of hidden units: ' + str(n_units))
