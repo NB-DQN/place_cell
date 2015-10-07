@@ -118,10 +118,10 @@ def evaluate(data, test=False):
             #    t_batch[0] // maze_size[0]))
 
             # print('c: {}, h: {}'.format(state['c'].data, state['h'].data)) # show the hidden states
-    return cuda.to_cpu(sum_error), hh, bin_y_error
+    return cuda.to_cpu(sum_error), hh, bin_y_error_sum
 
 # Evaluate on test dataset
 print('[test]')
 test_data = generate_test_dataset()
 test_perp, test_hh, test_error = evaluate(test_data, test=True)
-print('test classified: {}'.format(test_error/(60*100)))
+print('test error: {}'.format(test_error/(60*100)))

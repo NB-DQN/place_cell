@@ -35,7 +35,7 @@ for i in range(ev_iterations):
     
     # Evaluate on test dataset
     test_data = test.generate_test_dataset()
-    test_perp, test_hh = test.evaluate(test_data, test=True)
+    test_perp, test_hh, test_y_bin_error_sum = test.evaluate(test_data, test=True)
     
     test_data_stack.extend(test_data['coordinates'])
     test_hh_stack.extend(test_hh)
