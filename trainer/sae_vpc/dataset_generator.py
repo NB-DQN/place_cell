@@ -29,9 +29,7 @@ class DatasetGenerator:
             cid = self.coordinate_id()
         coordinate = self.get_coordinate_from_id(cid)
 
-        DEGREE_PER_DOT = 6
-
-        image = np.zeros(360 / DEGREE_PER_DOT)
+        image = np.zeros((360, 50))
         for target in self.visual_targets():
             distance = math.sqrt( \
                 (coordinate[0] - target[0]) ** 2 + \
@@ -40,9 +38,11 @@ class DatasetGenerator:
             angle = math.degrees(math.atan2(target[1] - coordinate[1], target[0] - coordinate[0]))
             if angle < 0:
                 angle += 360
+            visual_range = [round(i) for i in [angle - visual_width, angle + visual_width]]
 
-            visual_range = [round(i / DEGREE_PER_DOT) for i in [angle - visual_width, angle + visual_width]]
-            image[visual_range[0]:(visual_range[1] + 1)] = 1
+            visual_height = math.degrees(math.atan(2 / distance))
+
+            image[visual_range[0]:(visual_range[1] + 1), 0:visual_height] = 1
         return image
 
     def generate_seq(self, seq_length):
@@ -84,3 +84,9 @@ class DatasetGenerator:
 
         return { 'input': input, 'output': image[1:], 'coordinates': coordinates[1:] }
 
+    def generate_dataset_sae(self, n):
+        image = []
+        for i in range(0, n):
+            image.append(self.visual_image(np.random.randint(self.size[0] * self.size[1])).ravel())
+
+        return image
