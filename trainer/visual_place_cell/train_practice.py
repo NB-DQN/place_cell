@@ -174,6 +174,6 @@ for loop in range(len(train_data_length)):
 
     # Evaluate on test dataset
     print('[test]')
-    test_perp = evaluate(test_data, test_targets, test=True)
+    test_perp = evaluate(test_data, test=True)
     print('test classified: {}/{}'.format(test_perp, len(test_data)))
 
