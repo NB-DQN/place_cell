@@ -21,10 +21,10 @@ from chainer import cuda
 import chainer.functions as F
 from chainer import optimizers
 
-from dataset_generator import DatasetGenerator
+from analog_dataset_generator import DatasetGenerator
 
 # set parameters
-n_epoch = 100000 # number of epochs
+n_epoch = 10000 # number of epochs
 n_units = 60 # number of units per layer, len(train)=5 -> 20 might be the best
 batchsize = 1 # minibatch size
 bprop_len = 1 # length of truncated BPTT
@@ -52,7 +52,7 @@ test_data = dg.generate_seq(100)
 
 # model
 model = chainer.FunctionSet(
-        x_to_h = F.Linear(64, n_units * 4),
+        x_to_h = F.Linear(71, n_units * 4),
         h_to_h = F.Linear(n_units, n_units * 4),
         h_to_y = F.Linear(n_units, 60))
 if args.gpu >= 0:
@@ -165,7 +165,7 @@ for loop in range(len(train_data_length)):
         epoch += 1
 
         # save the model
-        f = open('pretrained_model_'+str(maze_size[0])+'_'+str(maze_size[1])+'.pkl', 'wb')
+        f = open('vel_analog_pretrained_model_'+str(maze_size[0])+'_'+str(maze_size[1])+'.pkl', 'wb')
         pickle.dump(model, f, 2)
         f.close()
 
@@ -173,4 +173,3 @@ for loop in range(len(train_data_length)):
     print('[test]')
     test_square_sum_error = evaluate(test_data, test=True)
     print('test square-sum error: {:.2f}'.format(test_square_sum_error))
-

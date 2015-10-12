@@ -84,8 +84,8 @@ def forward_one_step(x, t, state, train=True):
     sigmoid_y = 1 / (1 + np.exp(-y.data))
     bin_y = np.round((np.sign(sigmoid_y - 0.5) + 1) / 2)
 
-    error = ((t.data - sigmoid_y) ** 2).sum() / 60
-    bin_y_error = ((t.data - bin_y) ** 2).sum() / 60
+    error = ((t.data - sigmoid_y) ** 2).sum()
+    bin_y_error = ((t.data - bin_y) ** 2).sum()
     return state, F.sigmoid_cross_entropy(y, t), error, bin_y_error, h.data[0]
 
 # initialize hidden state
@@ -124,4 +124,4 @@ def evaluate(data, test=False):
 print('[test]')
 test_data = generate_test_dataset()
 test_perp, test_hh, test_error = evaluate(test_data, test=True)
-print('test error: {}'.format(test_error/(60*100)))
+print('test error: {}'.format(test_error))
