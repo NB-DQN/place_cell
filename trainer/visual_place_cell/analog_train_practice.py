@@ -52,7 +52,7 @@ test_data = dg.generate_seq(100)
 
 # model
 model = chainer.FunctionSet(
-        x_to_h = F.Linear(71, n_units * 4),
+        x_to_h = F.Linear(72, n_units * 4),
         h_to_h = F.Linear(n_units, n_units * 4),
         h_to_y = F.Linear(n_units, 60))
 if args.gpu >= 0:

@@ -1,6 +1,7 @@
 import numpy as np
 import math
 import random
+import sys
 
 class DatasetGenerator:
     def __init__(self, size):
@@ -44,7 +45,7 @@ class DatasetGenerator:
             visual_range = [round(i / DEGREE_PER_DOT) for i in [angle - visual_width, angle + visual_width]]
             image[visual_range[0]:(visual_range[1] + 1)] = 1
         return image
-
+    
     def generate_seq(self, seq_length):
         image = []
         directions = []
@@ -61,7 +62,8 @@ class DatasetGenerator:
             vel_choice = [x*vel_option for x in range(0, 5)]
 
             
-	    # limit movement
+	    #  movement  -> ang -> velocity
+            #print(self.current_coordinate)
             if self.current_coordinate[0] < 1 and self.current_coordinate[1] < 1:
                 ang_choice = [x for x in range(0, 91, ang_option)]
             elif self.current_coordinate[0] >= self.size[0] - 2 and self.current_coordinate[1] < 1: 
@@ -69,12 +71,12 @@ class DatasetGenerator:
 	    elif self.current_coordinate[0] >= self.size[0] - 2 and self.current_coordinate[1] >= self.size[1] - 2:
                 ang_choice = [x for x in range(180, 270, ang_option)] 
             elif self.current_coordinate[0] < 1 and self.current_coordinate[1] >= self.size[1] - 2:
-                ang_choice = [x for x in range(240, 361, ang_option)]
+                ang_choice = [x for x in range(300, 361, ang_option)]
                 
 	    elif self.current_coordinate[0] >= self.size[0] - 2:
                 ang_choice = [x for x in range(120, 270, ang_option)] 
             elif self.current_coordinate[0] < 1:
-                ang_choice = [x for x in range(0, 91, ang_option)] + [x for x in range(240, 360, ang_option)]
+                ang_choice = [x for x in range(0, 91, ang_option)] + [x for x in range(300, 360, ang_option)]
             elif self.current_coordinate[1] >= self.size[1] - 2:
                 ang_choice = [x for x in range(180, 361, ang_option)]
             elif self.current_coordinate[1] < 1:
@@ -84,16 +86,18 @@ class DatasetGenerator:
 	
 	    ang = random.choice(ang_choice) 
 	    vel = random.choice(vel_choice)
-            print(vel)
-            print(ang)
-            print(math.cos(float(ang)/180*math.pi))
+            #print(vel)
+            #print(ang)
+            #print(math.cos(float(ang)/180*math.pi))
 
 	    # move
-            print(self.current_coordinate)
+            #print(self.current_coordinate)
+            
 	    self.current_coordinate = (self.current_coordinate[0] + vel * math.cos(float(ang)/180*math.pi),
 				       self.current_coordinate[1] + vel * math.sin(float(ang)/180*math.pi))
-            print(self.current_coordinate)
-            
+            #print(self.current_coordinate)
+            if self.current_coordinate[0] < 0:
+              sys.exit("minus")
             direction = [0] * (360/ang_option+1)
 	    direction[int(ang/ang_option)] = 1
             velocity  = [0] * 5
