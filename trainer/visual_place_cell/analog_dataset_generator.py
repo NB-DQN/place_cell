@@ -51,39 +51,40 @@ class DatasetGenerator:
         velocitys =[]
         coordinates = []
 	ang_option = 60
-	vel_option = 1
+	vel_option = 0.25
 
         image.append(self.visual_image())
         coordinates.append((0, 0))
 
         for i in range(0, seq_length):
 
-            vel_choice = [x for x in range(0, 2, vel_option)]
+            vel_choice = [x*vel_option for x in range(0, 5)]
             
 	          # limit movement
-	    if self.current_coordinate[0] >= self.size[0] - 1:
-                ang_choice = [x for x in range(180, 360, ang_option)]
+	    if self.current_coordinate[0] >= self.size[0] - 2:
+                ang_choice.remove = [x for x in range(90, 271, ang_option)] 
             if self.current_coordinate[0] < 1:
-                ang_choice = [x for x in range(0, 181, ang_option)]
-            if self.current_coordinate[1] >= self.size[1] - 1:
+                ang_choice.remove = [x for x in range(0, 91, ang_option)] + [x for x in range(270, 360, ang_option)]
+            if self.current_coordinate[1] >= self.size[1] - 2:
                 ang_choice = [x for x in range(90, 271, ang_option)]
             if self.current_coordinate[1] < 1:
-                ang_choice = [x for x in range(0, 91, ang_option)] + [x for x in range(270, 360, ang_option)]
+                ang_choice = [x for x in range(180, 361, ang_option)]
             else:
 		ang_choice = [x for x in range(0, 360, ang_option) ]
 	
 	    ang = random.choice(ang_choice) 
 	    vel = random.choice(vel_choice)
-	    
+            
 	    # move
-	    self.current_coordinate = (self.current_coordinate[0] + vel * math.cos(ang),
-				       self.current_coordinate[1] + vel * math.sin(ang))
-          
+	    self.current_coordinate = (self.current_coordinate[0] + vel * math.cos(ang/180*math.pi),
+				       self.current_coordinate[1] + vel * math.sin(ang/180*math.pi))
+            print(self.current_coordinate)
+
       	    direction = [0] * (360/ang_option)
 	    direction[ang/ang_option] = 1
-            velocity  = [0] * (2/vel_option)
-            velocity[vel/vel_option]  = 1
-
+            velocity  = [0] * 5
+            velocity[int(vel/vel_option)]  = 1
+            
             directions.append(direction)
 	    velocitys.append(velocity)
             image.append(self.visual_image())

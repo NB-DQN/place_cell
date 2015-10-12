@@ -52,7 +52,7 @@ test_data = dg.generate_seq(100)
 
 # model
 model = chainer.FunctionSet(
-        x_to_h = F.Linear(68, n_units * 4),
+        x_to_h = F.Linear(71, n_units * 4),
         h_to_h = F.Linear(n_units, n_units * 4),
         h_to_y = F.Linear(n_units, 60))
 if args.gpu >= 0:
@@ -165,7 +165,7 @@ for loop in range(len(train_data_length)):
         epoch += 1
 
         # save the model
-        f = open('re_analog_pretrained_model_'+str(maze_size[0])+'_'+str(maze_size[1])+'.pkl', 'wb')
+        f = open('vel_analog_pretrained_model_'+str(maze_size[0])+'_'+str(maze_size[1])+'.pkl', 'wb')
         pickle.dump(model, f, 2)
         f.close()
 
