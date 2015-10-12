@@ -11,7 +11,7 @@ from dataset_generator import DatasetGenerator
 ## model definition
 
 # units
-number_of_units = [18000, 2000, 200, 40, 10]
+number_of_units = [1080, 360, 120, 40, 12]
 
 # layers
 enc_layer = [

@@ -10,7 +10,7 @@ from dataset_generator import DatasetGenerator
 ## model definition
 
 # units
-number_of_units = [18000, 2000, 200, 40, 10]
+number_of_units = [1080, 360, 120, 40, 12]
 
 # layers
 enc_layer = [
@@ -58,7 +58,7 @@ def encode(x, layer):
     return h
 
 dg = DatasetGenerator((9, 9))
-data = np.asarray(dg.generate_dataset_sae(10000), dtype='f')
+data = np.asarray(dg.generate_dataset_sae(5000), dtype='f')
 N = len(data)
 
 batchsize = 50
@@ -66,7 +66,7 @@ opt = Opt.Adam()
 
 
 tstart = time()
-for epoch in range(10):
+for epoch in range(100):
     tepoch = time()
     print('epoch : %d' % (epoch + 1))
     with open('dae.log', mode='a') as f:

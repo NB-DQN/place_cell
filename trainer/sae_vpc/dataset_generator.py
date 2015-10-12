@@ -29,18 +29,20 @@ class DatasetGenerator:
             cid = self.coordinate_id()
         coordinate = self.get_coordinate_from_id(cid)
 
-        image = np.zeros((360, 50))
+        DEGREE_PER_DOT = 4
+
+        image = np.zeros((360 / DEGREE_PER_DOT, 48 / DEGREE_PER_DOT))
         for target in self.visual_targets():
             distance = math.sqrt( \
                 (coordinate[0] - target[0]) ** 2 + \
                 (coordinate[1] - target[1]) ** 2)
-            visual_width = math.degrees(math.atan(0.5 / distance))
-            angle = math.degrees(math.atan2(target[1] - coordinate[1], target[0] - coordinate[0]))
+            visual_width = math.degrees(math.atan(0.5 / distance)) / DEGREE_PER_DOT
+            angle = math.degrees(math.atan2(target[1] - coordinate[1], target[0] - coordinate[0])) / DEGREE_PER_DOT
             if angle < 0:
-                angle += 360
+                angle += 360 / DEGREE_PER_DOT
             visual_range = [round(i) for i in [angle - visual_width, angle + visual_width]]
 
-            visual_height = math.degrees(math.atan(2 / distance))
+            visual_height = math.degrees(math.atan(2 / distance)) / DEGREE_PER_DOT
 
             image[visual_range[0]:(visual_range[1] + 1), 0:visual_height] = 1
         return image
