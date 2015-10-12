@@ -2,6 +2,7 @@ import chainer
 import chainer.functions as F
 import chainer.optimizers as Opt
 import numpy as np
+import matplotlib.pyplot as plt
 
 from time import time
 
@@ -38,7 +39,7 @@ model = chainer.FunctionSet(
     dec4=dec_layer[3],
 )
 
-param = np.load('dae.param.npy')
+param = np.load('dae.param.npy.1')
 model.copy_parameters_from(param)
 
 def encode(x):
@@ -60,3 +61,9 @@ for n in range(0, N):
     y = decode(encode(x))
     err = F.mean_squared_error(y, x)
     print(err.data)
+    plt.subplot(2, 1, 1)
+    plt.imshow(np.flipud(x.data.reshape((360, 50)).T), cmap=plt.cm.gray)
+    plt.subplot(2, 1, 2)
+    plt.imshow(np.flipud(y.data.reshape((360, 50)).T), cmap=plt.cm.gray)
+    plt.show()
+
