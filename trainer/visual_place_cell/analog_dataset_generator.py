@@ -25,11 +25,7 @@ class DatasetGenerator:
             (          -1,           -1), \
             (self.size[0],           -1)]
 
-    def visual_image(self, cid=None):
-        if cid is None:
-            cid = self.coordinate_id()
-        coordinate = self.get_coordinate_from_id(cid)
-
+    def visual_image(self, coordinate=(0, 0)):
         DEGREE_PER_DOT = 6
 
         image = np.zeros(360 / DEGREE_PER_DOT)
@@ -51,10 +47,10 @@ class DatasetGenerator:
         directions = []
         velocitys =[]
         coordinates = []
-	ang_option = 60
-	vel_option = 0.25
+        ang_option = 60
+        vel_option = 0.25
 
-        image.append(self.visual_image())
+        image.append(self.visual_image((0, 0)))
         coordinates.append((0, 0))
 
         for i in range(0, seq_length):
@@ -62,18 +58,18 @@ class DatasetGenerator:
             vel_choice = [x*vel_option for x in range(0, 5)]
 
             
-	    #  movement  -> ang -> velocity
+            #  movement  -> ang -> velocity
             #print(self.current_coordinate)
             if self.current_coordinate[0] < 1 and self.current_coordinate[1] < 1:
                 ang_choice = [x for x in range(0, 91, ang_option)]
             elif self.current_coordinate[0] >= self.size[0] - 2 and self.current_coordinate[1] < 1: 
                 ang_choice = [x for x in range(120, 181, ang_option)]            
-	    elif self.current_coordinate[0] >= self.size[0] - 2 and self.current_coordinate[1] >= self.size[1] - 2:
+            elif self.current_coordinate[0] >= self.size[0] - 2 and self.current_coordinate[1] >= self.size[1] - 2:
                 ang_choice = [x for x in range(180, 270, ang_option)] 
             elif self.current_coordinate[0] < 1 and self.current_coordinate[1] >= self.size[1] - 2:
                 ang_choice = [x for x in range(300, 361, ang_option)]
                 
-	    elif self.current_coordinate[0] >= self.size[0] - 2:
+            elif self.current_coordinate[0] >= self.size[0] - 2:
                 ang_choice = [x for x in range(120, 270, ang_option)] 
             elif self.current_coordinate[0] < 1:
                 ang_choice = [x for x in range(0, 91, ang_option)] + [x for x in range(300, 360, ang_option)]
@@ -82,30 +78,30 @@ class DatasetGenerator:
             elif self.current_coordinate[1] < 1:
                 ang_choice = [x for x in range(0, 181, ang_option)]
             else:
-		ang_choice = [x for x in range(0, 360, ang_option) ]
-	
-	    ang = random.choice(ang_choice) 
-	    vel = random.choice(vel_choice)
+                ang_choice = [x for x in range(0, 360, ang_option) ]
+        
+            ang = random.choice(ang_choice) 
+            vel = random.choice(vel_choice)
             #print(vel)
             #print(ang)
             #print(math.cos(float(ang)/180*math.pi))
 
-	    # move
+            # move
             #print(self.current_coordinate)
             
-	    self.current_coordinate = (self.current_coordinate[0] + vel * math.cos(float(ang)/180*math.pi),
-				       self.current_coordinate[1] + vel * math.sin(float(ang)/180*math.pi))
+            self.current_coordinate = (self.current_coordinate[0] + vel * math.cos(float(ang)/180*math.pi),
+                                       self.current_coordinate[1] + vel * math.sin(float(ang)/180*math.pi))
             #print(self.current_coordinate)
             if self.current_coordinate[0] < 0:
               sys.exit("minus")
             direction = [0] * (360/ang_option+1)
-	    direction[int(ang/ang_option)] = 1
+            direction[int(ang/ang_option)] = 1
             velocity  = [0] * 5
             velocity[int(vel/vel_option)]  = 1        
 
             directions.append(direction)
-	    velocitys.append(velocity)
-            image.append(self.visual_image())
+            velocitys.append(velocity)
+            image.append(self.visual_image(self.current_coordinate))
             coordinates.append(self.current_coordinate)
 
         input = []
