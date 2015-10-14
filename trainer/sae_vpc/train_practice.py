@@ -57,6 +57,7 @@ model = chainer.FunctionSet(
         h_to_h = F.Linear(n_units, n_units * 4),
         h_to_y = F.Linear(n_units, 12))
 if args.gpu >= 0:
+    print('using GPU #%s' % args.gpu)
     cuda.check_cuda_available()
     cuda.get_device(args.gpu).use()
     model.to_gpu()
@@ -65,7 +66,7 @@ if args.gpu >= 0:
 optimizer = optimizers.SGD(lr=1.)
 optimizer.setup(model.collect_parameters())
 
-sae = StackedAutoencoder()
+sae = StackedAutoencoder(args.gpu)
 
 # one-step forward propagation
 def forward_one_step(x, t, state, train=True):
@@ -96,7 +97,7 @@ def evaluate(data, test=False):
 
     for i in range(len(data['direction'])):
         h_batch = sae.encode(chainer.Variable(mod.asarray([data['image'][i]], dtype='float32'))).data[0]
-        x_batch = mod.asarray([mod.hstack((data['direction'][i], h_batch))], dtype='float32')
+        x_batch = mod.asarray([np.hstack((data['direction'][i], h_batch))], dtype='float32')
         t_batch = sae.encode(chainer.Variable(mod.asarray([data['image'][i + 1]], dtype = 'float32'))).data
         state, loss, accuracy = forward_one_step(x_batch, t_batch, state, train=False)
         sum_accuracy += accuracy
@@ -134,7 +135,8 @@ for loop in range(len(train_data_length)):
 
             # forward propagation
             h_batch = sae.encode(chainer.Variable(mod.asarray([train_data['image'][i]], dtype='float32'))).data[0]
-            x_batch = mod.asarray([mod.hstack((train_data['direction'][i], h_batch))], dtype='float32')
+            tmp = train_data['direction'][i] + h_batch.tolist()
+            x_batch = mod.asarray([tmp], dtype='float32')
             t_batch = sae.encode(chainer.Variable(mod.asarray([train_data['image'][i + 1]], dtype = 'float32'))).data
 
             state, loss_i, acc_i = forward_one_step(x_batch, t_batch, state)

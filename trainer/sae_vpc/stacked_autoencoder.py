@@ -1,11 +1,11 @@
 import chainer
 import chainer.functions as F
 import chainer.optimizers as Opt
+from chainer import cuda
 import numpy as np
-import matplotlib.pyplot as plt
 
 class StackedAutoencoder:
-    def __init__(self):
+    def __init__(self, gpu=-1):
         self.n_layer = 4
 
         # units
@@ -37,8 +37,16 @@ class StackedAutoencoder:
             dec4=self.dec_layer[3],
         )
 
-        param = np.load('dae.param.npy.1')
-        self.model.copy_parameters_from(param)
+        try:
+            param = np.load('dae.param.npy.1')
+            self.model.copy_parameters_from(param)
+        except:
+            pass
+
+        if gpu >= 0:
+            cuda.check_cuda_available()
+            cuda.get_device(gpu).use()
+            self.model.to_gpu()
 
     def encode(self, x):
         for l in range(0, self.n_layer):
