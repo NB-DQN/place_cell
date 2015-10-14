@@ -21,11 +21,12 @@ from chainer import cuda
 import chainer.functions as F
 from chainer import optimizers
 
+from stacked_autoencoder import StackedAutoencoder
 from dataset_generator import DatasetGenerator
 
 # set parameters
 n_epoch = 100000 # number of epochs
-n_units = 81 # number of units per layer, len(train)=5 -> 20 might be the best
+n_units = 12 # number of units per layer, len(train)=5 -> 20 might be the best
 batchsize = 1 # minibatch size
 bprop_len = 1 # length of truncated BPTT
 valid_len = n_epoch // 100 # 1000 # epoch on which accuracy and perp are calculated
@@ -52,9 +53,9 @@ test_data = dg.generate_seq(100)
 
 # model
 model = chainer.FunctionSet(
-        x_to_h = F.Linear(64, n_units * 4),
+        x_to_h = F.Linear(16, n_units * 4),
         h_to_h = F.Linear(n_units, n_units * 4),
-        h_to_y = F.Linear(n_units, 60))
+        h_to_y = F.Linear(n_units, 12))
 if args.gpu >= 0:
     cuda.check_cuda_available()
     cuda.get_device(args.gpu).use()
@@ -63,6 +64,8 @@ if args.gpu >= 0:
 # optimizer
 optimizer = optimizers.SGD(lr=1.)
 optimizer.setup(model.collect_parameters())
+
+sae = StackedAutoencoder()
 
 # one-step forward propagation
 def forward_one_step(x, t, state, train=True):
@@ -77,7 +80,7 @@ def forward_one_step(x, t, state, train=True):
     state = {'c': c, 'h': h}
 
     accuracy = ((t.data - y.data) ** 2).sum() / 60
-    return state, F.sigmoid_cross_entropy(y, t), accuracy
+    return state, F.mean_squared_error(y, t), accuracy
 
 # initialize hidden state
 def make_initial_state(batchsize=batchsize, train=True):
@@ -91,9 +94,10 @@ def evaluate(data, test=False):
     sum_accuracy = mod.zeros(())
     state = make_initial_state(batchsize=1, train=False)
 
-    for i in six.moves.range(len(data['input'])):
-        x_batch = mod.asarray([data['input'][i]], dtype = 'float32')
-        t_batch = mod.asarray([data['output'][i]], dtype = 'int32')
+    for i in range(len(data['direction'])):
+        h_batch = sae.encode(chainer.Variable(mod.asarray([data['image'][i]], dtype='float32'))).data[0]
+        x_batch = mod.asarray([mod.hstack((data['direction'][i], h_batch))], dtype='float32')
+        t_batch = sae.encode(chainer.Variable(mod.asarray([data['image'][i + 1]], dtype = 'float32'))).data
         state, loss, accuracy = forward_one_step(x_batch, t_batch, state, train=False)
         sum_accuracy += accuracy
         if test == True:
@@ -129,8 +133,9 @@ for loop in range(len(train_data_length)):
         for i in six.moves.range(jump):
 
             # forward propagation
-            x_batch = mod.array([train_data['input'][i]],  dtype = 'float32')
-            t_batch = mod.array([train_data['output'][i]], dtype = 'int32')
+            h_batch = sae.encode(chainer.Variable(mod.asarray([train_data['image'][i]], dtype='float32'))).data[0]
+            x_batch = mod.asarray([mod.hstack((train_data['direction'][i], h_batch))], dtype='float32')
+            t_batch = sae.encode(chainer.Variable(mod.asarray([train_data['image'][i + 1]], dtype = 'float32'))).data
 
             state, loss_i, acc_i = forward_one_step(x_batch, t_batch, state)
             accum_loss += loss_i

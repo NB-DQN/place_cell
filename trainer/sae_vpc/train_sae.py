@@ -64,15 +64,25 @@ N = len(data)
 batchsize = 50
 opt = Opt.Adam()
 
+try:
+    param = np.load('dae.param.npy')
+    model.copy_parameters_from(param)
+except:
+    pass
+
+flag = [False, False, False, False]
 
 tstart = time()
-for epoch in range(100):
+for epoch in range(10000):
     tepoch = time()
     print('epoch : %d' % (epoch + 1))
     with open('dae.log', mode='a') as f:
         f.write("\n%d " % (epoch + 1))
 
     for l in range(0, 4):
+        if flag[l]:
+            continue
+
         opt.setup(layerwise[l])
 
         sum_err = 0.
@@ -93,6 +103,8 @@ for epoch in range(100):
 
         sum_err /= N
         print("\t%d %f" % (l, sum_err))
+        if sum_err < 0.001:
+            flag[l] = True
 
     param = np.array(model.parameters)
     np.save('dae.param.npy', param)

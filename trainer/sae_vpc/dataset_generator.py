@@ -80,11 +80,7 @@ class DatasetGenerator:
             image.append(self.visual_image())
             coordinates.append(self.current_coordinate)
 
-        input = []
-        for i in range(len(directions)):
-            input.append(directions[i] + image[i].tolist())
-
-        return { 'input': input, 'output': image[1:], 'coordinates': coordinates[1:] }
+        return { 'image': image, 'direction': directions, 'coordinates': coordinates[1:] }
 
     def generate_dataset_sae(self, n):
         image = []
