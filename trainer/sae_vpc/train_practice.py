@@ -20,6 +20,7 @@ import chainer
 from chainer import cuda
 import chainer.functions as F
 from chainer import optimizers
+from chainer.utils import type_check
 
 from stacked_autoencoder import StackedAutoencoder
 from dataset_generator import DatasetGenerator
@@ -41,6 +42,18 @@ parser.add_argument('--gpu', '-g', default=-1, type=int,
         help='GPU ID (negative value indicates CPU)')
 args = parser.parse_args()
 mod = cuda.cupy if args.gpu >= 0 else np
+
+# monkey patching type check
+def sigmoid_cross_entropy_check_type_forward(self, in_types):
+    type_check.expect(in_types.size() == 2)
+
+    x_type, t_type = in_types
+    type_check.expect(
+        x_type.dtype == mod.float32,
+        t_type.dtype == mod.float32,
+        x_type.shape == t_type.shape
+    )
+F.SigmoidCrossEntropy.check_type_forward = sigmoid_cross_entropy_check_type_forward
 
 # generate dataset
 dg = DatasetGenerator(maze_size)
