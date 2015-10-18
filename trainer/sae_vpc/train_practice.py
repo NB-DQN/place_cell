@@ -93,8 +93,11 @@ def forward_one_step(x, t, state, train=True):
     y = model.h_to_y(h)
     state = {'c': c, 'h': h}
 
+    sigmoid_y = 1 / (1 + mod.exp(-y.data))
+    squared_sum_error = ((t.data - sigmoid_y) ** 2).sum()
+
     accuracy = ((t.data - y.data) ** 2).sum() / 60
-    return state, F.mean_squared_error(y, t), accuracy
+    return state, F.sigmoid_cross_entropy(y, t), squared_sum_error
 
 # initialize hidden state
 def make_initial_state(batchsize=batchsize, train=True):
@@ -105,21 +108,18 @@ def make_initial_state(batchsize=batchsize, train=True):
 
 # evaluation
 def evaluate(data, test=False):
-    sum_accuracy = mod.zeros(())
+    sum_error = 0
     state = make_initial_state(batchsize=1, train=False)
 
     for i in range(len(data['direction'])):
         h_batch = sae.encode(chainer.Variable(mod.asarray([data['image'][i]], dtype='float32'))).data[0]
-        x_batch = mod.asarray([np.hstack((data['direction'][i], h_batch))], dtype='float32')
+        x_batch = mod.asarray([mod.hstack((data['direction'][i], h_batch))], dtype='float32')
         t_batch = sae.encode(chainer.Variable(mod.asarray([data['image'][i + 1]], dtype = 'float32'))).data
-        state, loss, accuracy = forward_one_step(x_batch, t_batch, state, train=False)
-        sum_accuracy += accuracy
-        if test == True:
-            print('{} Target: ({}, {})'.format(accuracy, t_batch[0] % maze_size[0],
-                t_batch[0] // maze_size[0]))
 
-            # print('c: {}, h: {}'.format(state['c'].data, state['h'].data)) # show the hidden states
-    return cuda.to_cpu(sum_accuracy)
+        state, loss, squared_sum_error = forward_one_step(x_batch, t_batch, state, train=False)
+        sum_error += squared_sum_error
+
+    return sum_error
 
 # learning loop iterations
 for loop in range(len(train_data_length)):
@@ -175,7 +175,7 @@ for loop in range(len(train_data_length)):
             perp = cuda.to_cpu(cur_log_perp) / valid_len
             now = time.time()
             throuput = valid_len / (now - cur_at)
-            print('epoch {}: train perp: {:.2f} train classified {}, valid classified {} ({:.2f} epochs/sec)'
+            print('epoch {}: train perp: {:.2f} train squared_sum_error {}, valid squared_sum_error {} ({:.2f} epochs/sec)'
                     .format(epoch+1, perp, train_perp, valid_perp, throuput))
             cur_at = now
 
@@ -194,6 +194,6 @@ for loop in range(len(train_data_length)):
 
     # Evaluate on test dataset
     print('[test]')
-    test_perp = evaluate(test_data, test_targets, test=True)
-    print('test classified: {}/{}'.format(test_perp, len(test_data)))
+    test_square_sum_error = evaluate(test_data)
+    print('test squared_sum_error: {:.2f}'.format(test_square_sum_error))
 
