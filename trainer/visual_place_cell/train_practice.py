@@ -32,7 +32,7 @@ valid_len = n_epoch // 100 # 1000 # epoch on which accuracy and perp are calcula
 grad_clip = 5 # gradient norm threshold to clip
 maze_size = (9, 9)
 
-train_data_length = [20, 100]
+whole_len = 20
 
 # GPU
 parser = argparse.ArgumentParser()
@@ -100,77 +100,72 @@ def evaluate(data, test=False):
         sum_error += square_sum_error
     return sum_error
 
-# learning loop iterations
-for loop in range(len(train_data_length)):
+# loop initialization
+jump = whole_len // batchsize # = whole len
+cur_log_perp = mod.zeros(())
+start_at = time.time()
+cur_at = start_at
+epoch = 0
+accum_loss = chainer.Variable(mod.zeros((), dtype=np.float32))
+print('[train]')
+print('going to train {} iterations'.format(jump * n_epoch))
 
-    # loop initialization
-    whole_len = train_data_length[loop]
-    jump = whole_len // batchsize # = whole len
-    cur_log_perp = mod.zeros(())
-    start_at = time.time()
-    cur_at = start_at
-    epoch = 0
-    accum_loss = chainer.Variable(mod.zeros((), dtype=np.float32))
-    print('[train]')
-    print('going to train {} iterations'.format(jump * n_epoch))
+# loop starts
+while epoch <= n_epoch:
 
-    # loop starts
-    while epoch <= n_epoch:
+    # initialize hidden state to 0
+    state = make_initial_state()
 
-        # initialize hidden state to 0
-        state = make_initial_state()
+    # train dataset
+    train_data = dg.generate_seq(whole_len)
 
-        # train dataset
-        train_data = dg.generate_seq(whole_len)
+    for i in six.moves.range(jump):
 
-        for i in six.moves.range(jump):
+        # forward propagation
+        x_batch = mod.array([train_data['input'][i]],  dtype = 'float32')
+        t_batch = mod.array([train_data['output'][i]], dtype = 'int32')
 
-            # forward propagation
-            x_batch = mod.array([train_data['input'][i]],  dtype = 'float32')
-            t_batch = mod.array([train_data['output'][i]], dtype = 'int32')
+        state, loss_i, acc_i = forward_one_step(x_batch, t_batch, state)
+        accum_loss += loss_i
+        cur_log_perp += loss_i.data.reshape(())
 
-            state, loss_i, acc_i = forward_one_step(x_batch, t_batch, state)
-            accum_loss += loss_i
-            cur_log_perp += loss_i.data.reshape(())
+        # truncated BPTT
+        if (i + 1) % bprop_len == 0:
+            optimizer.zero_grads()
+            accum_loss.backward()
+            accum_loss.unchain_backward()  # truncate
+            accum_loss = chainer.Variable(mod.zeros((), dtype=np.float32))
+            optimizer.clip_grads(grad_clip) # gradient clip
+            optimizer.update()
 
-            # truncated BPTT
-            if (i + 1) % bprop_len == 0:
-                optimizer.zero_grads()
-                accum_loss.backward()
-                accum_loss.unchain_backward()  # truncate
-                accum_loss = chainer.Variable(mod.zeros((), dtype=np.float32))
-                optimizer.clip_grads(grad_clip) # gradient clip
-                optimizer.update()
+        sys.stdout.flush()
 
-            sys.stdout.flush()
+    if (epoch + 1) % valid_len == 0:
 
-        if (epoch + 1) % valid_len == 0:
+        # calculate accuracy, cumulative loss & throuput
+        train_perp = evaluate(train_data)
+        valid_perp = evaluate(valid_data)
+        perp = cuda.to_cpu(cur_log_perp) / valid_len
+        now = time.time()
+        throuput = valid_len / (now - cur_at)
+        print('epoch {}: train perp: {:.2f} train square-sum error: {:.2f}, valid square-sum error: {:.2f} ({:.2f} epochs/sec)'
+                .format(epoch+1, perp, train_perp, valid_perp, throuput))
+        cur_at = now
 
-            # calculate accuracy, cumulative loss & throuput
-            train_perp = evaluate(train_data)
-            valid_perp = evaluate(valid_data)
-            perp = cuda.to_cpu(cur_log_perp) / valid_len
-            now = time.time()
-            throuput = valid_len / (now - cur_at)
-            print('epoch {}: train perp: {:.2f} train square-sum error: {:.2f}, valid square-sum error: {:.2f} ({:.2f} epochs/sec)'
-                    .format(epoch+1, perp, train_perp, valid_perp, throuput))
-            cur_at = now
+        #  termination criteria
+        if perp < 0.001:
+            break
+        else:
+            cur_log_perp.fill(0)
 
-            #  termination criteria
-            if perp < 0.001:
-                break
-            else:
-                cur_log_perp.fill(0)
+    epoch += 1
 
-        epoch += 1
+    # save the model
+    f = open('pretrained_model_'+str(maze_size[0])+'_'+str(maze_size[1])+'.pkl', 'wb')
+    pickle.dump(model, f, 2)
+    f.close()
 
-        # save the model
-        f = open('pretrained_model_'+str(maze_size[0])+'_'+str(maze_size[1])+'.pkl', 'wb')
-        pickle.dump(model, f, 2)
-        f.close()
-
-    # Evaluate on test dataset
-    print('[test]')
-    test_square_sum_error = evaluate(test_data, test=True)
-    print('test square-sum error: {:.2f}'.format(test_square_sum_error))
-
+# Evaluate on test dataset
+print('[test]')
+test_square_sum_error = evaluate(test_data, test=True)
+print('test square-sum error: {:.2f}'.format(test_square_sum_error))
