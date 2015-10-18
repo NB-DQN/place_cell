@@ -25,11 +25,11 @@ from stacked_autoencoder import StackedAutoencoder
 from dataset_generator import DatasetGenerator
 
 # set parameters
-n_epoch = 100000 # number of epochs
+n_epoch = 1000000 # number of epochs
 n_units = 12 # number of units per layer, len(train)=5 -> 20 might be the best
 batchsize = 1 # minibatch size
 bprop_len = 1 # length of truncated BPTT
-valid_len = n_epoch // 100 # 1000 # epoch on which accuracy and perp are calculated
+valid_len = 1000 # epoch on which accuracy and perp are calculated
 grad_clip = 5 # gradient norm threshold to clip
 maze_size = (9, 9)
 
