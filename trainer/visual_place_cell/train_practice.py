@@ -108,7 +108,7 @@ cur_at = start_at
 epoch = 0
 accum_loss = chainer.Variable(mod.zeros((), dtype=np.float32))
 print('[train]')
-print('going to train {} iterations'.format(jump * n_epoch))
+print('going to train {} epochs'.format(n_epoch))
 
 # stack errors
 train_errors = []
@@ -123,6 +123,39 @@ while epoch <= n_epoch:
     # train dataset
     train_data = dg.generate_seq(whole_len)
 
+    if epoch % valid_len == 0:
+
+        # calculate accuracy, cumulative loss & throuput
+        train_perp = evaluate(train_data)
+        valid_perp = evaluate(valid_data)
+        
+        if epoch == 0:
+            perp = None
+        else:
+            perp = cuda.to_cpu(cur_log_perp) / valid_len
+            perp = int(perp * 100) / 100.0
+            
+        now = time.time()
+        
+        if epoch == 0:
+            throuput =  0.0
+        else:
+            throuput = valid_len / (now - cur_at)
+            
+        print('epoch {}: train perp: {} train square-sum error: {:.2f}, valid square-sum error: {:.2f} ({:.2f} epochs/sec)'
+                .format(epoch, perp, train_perp, valid_perp, throuput))
+                
+        train_errors.append(train_perp)
+        valid_errors.append(valid_perp)
+        cur_at = now
+        
+        #  termination criteria
+        # if perp < 0.001:
+        #     break
+        # else:
+        #     cur_log_perp.fill(0)
+        cur_log_perp.fill(0)
+    
     for i in six.moves.range(jump):
 
         # forward propagation
@@ -144,27 +177,6 @@ while epoch <= n_epoch:
 
         sys.stdout.flush()
 
-    if (epoch + 1) % valid_len == 0:
-
-        # calculate accuracy, cumulative loss & throuput
-        train_perp = evaluate(train_data)
-        valid_perp = evaluate(valid_data)
-        perp = cuda.to_cpu(cur_log_perp) / valid_len
-        now = time.time()
-        throuput = valid_len / (now - cur_at)
-        print('epoch {}: train perp: {:.2f} train square-sum error: {:.2f}, valid square-sum error: {:.2f} ({:.2f} epochs/sec)'
-                .format(epoch+1, perp, train_perp, valid_perp, throuput))
-        
-        train_errors.append(train_perp)
-        valid_errors.append(valid_perp)
-        cur_at = now
-
-        #  termination criteria
-        if perp < 0.001:
-            break
-        else:
-            cur_log_perp.fill(0)
-
     epoch += 1
 
     # save the model
@@ -176,3 +188,4 @@ while epoch <= n_epoch:
 print('[test]')
 test_square_sum_error = evaluate(test_data, test=True)
 print('test square-sum error: {:.2f}'.format(test_square_sum_error))
+
