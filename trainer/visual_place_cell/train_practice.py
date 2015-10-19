@@ -110,6 +110,10 @@ accum_loss = chainer.Variable(mod.zeros((), dtype=np.float32))
 print('[train]')
 print('going to train {} iterations'.format(jump * n_epoch))
 
+# stack errors
+train_errors = []
+valid_errors = []
+
 # loop starts
 while epoch <= n_epoch:
 
@@ -150,6 +154,9 @@ while epoch <= n_epoch:
         throuput = valid_len / (now - cur_at)
         print('epoch {}: train perp: {:.2f} train square-sum error: {:.2f}, valid square-sum error: {:.2f} ({:.2f} epochs/sec)'
                 .format(epoch+1, perp, train_perp, valid_perp, throuput))
+        
+        train_errors.append(train_perp)
+        valid_errors.append(valid_perp)
         cur_at = now
 
         #  termination criteria
