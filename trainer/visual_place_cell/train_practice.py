@@ -78,9 +78,9 @@ def forward_one_step(x, t, state, train=True):
     state = {'c': c, 'h': h}
     
     sigmoid_y = 1 / (1 + np.exp(-y.data))
-    square_sum_error = ((t.data - sigmoid_y) ** 2).sum()
+    mean_squared_error = ((t.data - sigmoid_y) ** 2).sum() / t.data.size
 
-    return state, F.sigmoid_cross_entropy(y, t), square_sum_error
+    return state, F.sigmoid_cross_entropy(y, t), mean_squared_error
 
 # initialize hidden state
 def make_initial_state(batchsize=batchsize, train=True):
@@ -97,9 +97,9 @@ def evaluate(data, test=False):
     for i in six.moves.range(len(data['input'])):
         x_batch = mod.asarray([data['input'][i]], dtype = 'float32')
         t_batch = mod.asarray([data['output'][i]], dtype = 'int32')
-        state, loss, square_sum_error = forward_one_step(x_batch, t_batch, state, train=False)
-        sum_error += square_sum_error
-    return sum_error
+        state, loss, mean_squared_error = forward_one_step(x_batch, t_batch, state, train=False)
+        sum_error += mean_squared_error
+    return sum_error / len(data['input'])
 
 # loop initialization
 jump = whole_len // batchsize # = whole len
@@ -143,7 +143,7 @@ while epoch <= n_epoch:
         else:
             throuput = valid_len / (now - cur_at)
             
-        print('epoch {}: train perp: {} train square-sum error: {:.2f}, valid square-sum error: {:.2f} ({:.2f} epochs/sec)'
+        print('epoch {}: train perp: {} train mean squared error: {:.2f}, valid mean squared error: {:.2f} ({:.2f} epochs/sec)'
                 .format(epoch, perp, train_perp, valid_perp, throuput))
                 
         train_errors.append(train_perp)
@@ -193,10 +193,11 @@ plt. plot(x, valid_errors, 'ro-')
 plt.title('LSTM errors')
 plt.xlabel('training epochs')
 plt.ylabel('mean squared error')
-plt.legend(['train', 'test'], loc =3)
+plt.legend(['train', 'test'], loc =1)
+plt.show()
 
 # Evaluate on test dataset
 print('[test]')
-test_square_sum_error = evaluate(test_data, test=True)
-print('test square-sum error: {:.2f}'.format(test_square_sum_error))
+test_mean_squared_error = evaluate(test_data, test=True)
+print('test mean squared error: {:.2f}'.format(test_mean_squared_error))
 
