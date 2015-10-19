@@ -15,6 +15,7 @@ import pickle
 
 import numpy as np
 import six
+import matplotlib.pyplot as plt
 
 import chainer
 from chainer import cuda
@@ -183,6 +184,16 @@ while epoch <= n_epoch:
     f = open('pretrained_model_'+str(maze_size[0])+'_'+str(maze_size[1])+'.pkl', 'wb')
     pickle.dump(model, f, 2)
     f.close()
+
+# plot
+x = range(0, n_epoch + 1, valid_len)
+plt. plot(x, train_errors, 'bo-')
+plt.hold(True)
+plt. plot(x, valid_errors, 'ro-')
+plt.title('LSTM errors')
+plt.xlabel('training epochs')
+plt.ylabel('mean squared error')
+plt.legend(['train', 'test'], loc =3)
 
 # Evaluate on test dataset
 print('[test]')
