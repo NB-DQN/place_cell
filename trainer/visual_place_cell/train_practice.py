@@ -25,7 +25,7 @@ from chainer import optimizers
 from dataset_generator import DatasetGenerator
 
 # set parameters
-n_epoch = 100000 # number of epochs
+n_epoch = 10000 # number of epochs
 n_units = 60 # number of units per layer, len(train)=5 -> 20 might be the best
 batchsize = 1 # minibatch size
 bprop_len = 1 # length of truncated BPTT
@@ -34,6 +34,7 @@ grad_clip = 5 # gradient norm threshold to clip
 maze_size = (9, 9)
 
 whole_len = 20
+valid_iter = 20
 
 # GPU
 parser = argparse.ArgumentParser()
@@ -46,7 +47,10 @@ mod = cuda.cupy if args.gpu >= 0 else np
 dg = DatasetGenerator(maze_size)
 
 # validation dataset
-valid_data = dg.generate_seq(100)
+valid_data_stack = []
+for i in range(valid_iter):
+    valid_data = dg.generate_seq(100)
+    valid_data_stack.append(valid_data)
 
 # test dataset
 test_data = dg.generate_seq(100)
@@ -112,8 +116,9 @@ print('[train]')
 print('going to train {} epochs'.format(n_epoch))
 
 # stack errors
-train_errors = []
-valid_errors = []
+train_errors = np.zeros(n_epoch / valid_len + 1)
+valid_errors_mean = np.zeros(n_epoch / valid_len + 1)
+valid_errors_se = np.zeros(n_epoch / valid_len + 1)
 
 # loop starts
 while epoch <= n_epoch:
@@ -128,7 +133,15 @@ while epoch <= n_epoch:
 
         # calculate accuracy, cumulative loss & throuput
         train_perp = evaluate(train_data)
-        valid_perp = evaluate(valid_data)
+        valid_perp_stack = np.zeros(valid_iter)
+        for i in range(valid_iter):
+            valid_perp = evaluate(valid_data_stack[i])
+            valid_perp_stack[i] = valid_perp
+        valid_perp_mean = np.mean(valid_perp_stack, axis=0)
+        valid_errors_mean[epoch / valid_len] = valid_perp_mean
+        valid_perp_se = np.std(valid_perp_stack, axis=0) / np.sqrt(valid_iter)
+        valid_errors_se[epoch / valid_len] = valid_perp_se
+        train_errors[epoch / valid_len] = train_perp
         
         if epoch == 0:
             perp = None
@@ -143,11 +156,9 @@ while epoch <= n_epoch:
         else:
             throuput = valid_len / (now - cur_at)
             
-        print('epoch {}: train perp: {} train mean squared error: {:.2f}, valid mean squared error: {:.2f} ({:.2f} epochs/sec)'
-                .format(epoch, perp, train_perp, valid_perp, throuput))
+        print('epoch {}: train perp: {} train mean squared error: {:.5f}, valid mean squared error: {:.5f} ({:.2f} epochs/sec)'
+                .format(epoch, perp, train_perp, valid_perp_mean, throuput))
                 
-        train_errors.append(train_perp)
-        valid_errors.append(valid_perp)
         cur_at = now
         
         #  termination criteria
@@ -186,18 +197,19 @@ while epoch <= n_epoch:
     f.close()
 
 # plot
-x = range(0, n_epoch + 1, valid_len)
+x = np.arange(0, n_epoch + 1, valid_len)
 plt. plot(x, train_errors, 'bo-')
 plt.hold(True)
-plt. plot(x, valid_errors, 'ro-')
+plt. errorbar(x, valid_errors_mean, yerr = valid_errors_se, fmt='ro-')
 plt.title('LSTM errors')
 plt.xlabel('training epochs')
 plt.ylabel('mean squared error')
 plt.legend(['train', 'test'], loc =1)
+plt.ylim([0, 0.05])
 plt.show()
 
 # Evaluate on test dataset
 print('[test]')
 test_mean_squared_error = evaluate(test_data, test=True)
-print('test mean squared error: {:.2f}'.format(test_mean_squared_error))
+print('test mean squared error: {:.5f}'.format(test_mean_squared_error))
 
