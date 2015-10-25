@@ -196,6 +196,11 @@ while epoch <= n_epoch:
     pickle.dump(model, f, 2)
     f.close()
 
+# Evaluate on test dataset
+print('[test]')
+test_mean_squared_error = evaluate(test_data, test=True)
+print('test mean squared error: {:.5f}'.format(test_mean_squared_error))
+
 # plot
 x = np.arange(0, n_epoch + 1, valid_len)
 plt. plot(x, train_errors, 'bo-')
@@ -206,10 +211,7 @@ plt.xlabel('training epochs')
 plt.ylabel('mean squared error')
 plt.legend(['train', 'test'], loc =1)
 plt.ylim([0, 0.05])
+# plt.savefig("figure1.svg")
+# plt.savefig("figure1.png")
 plt.show()
-
-# Evaluate on test dataset
-print('[test]')
-test_mean_squared_error = evaluate(test_data, test=True)
-print('test mean squared error: {:.5f}'.format(test_mean_squared_error))
 
