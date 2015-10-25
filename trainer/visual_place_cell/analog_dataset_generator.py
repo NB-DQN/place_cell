@@ -25,7 +25,9 @@ class DatasetGenerator:
             (          -1,           -1), \
             (self.size[0],           -1)]
 
-    def visual_image(self, coordinate=(0, 0)):
+    def visual_image(self, coordinate=None):
+        if coordinate == None:
+            coordinate = self.current_coordinate
         #DEGREE_PER_DOT = 3
         DEGREE_PER_DOT = 6
 
@@ -53,7 +55,7 @@ class DatasetGenerator:
         vel_option = 1
         maze_size = (9,9)
 
-        image.append(self.visual_image((0, 0)))
+        image.append(self.visual_image())
         coordinates.append((0, 0))
 
         for i in range(0, seq_length):
@@ -117,7 +119,7 @@ class DatasetGenerator:
             if self.current_coordinate[0] < -0.1 or self.current_coordinate[1] < -0.1 or self.current_coordinate[0] > 8 or  self.current_coordinate[1] > 8:
               sys.exit("over_maze")
               
-            direction = [0] * (360/ang_option)
+            direction = [0] * (360/ang_option) # This direction needs modified later
             direction[int(ang/ang_option)] = 1
             #print(direction)
             #velocity  = [0] * 2
@@ -128,7 +130,7 @@ class DatasetGenerator:
             directions.append(direction)
             #print(directions)
             velocitys.append(velocity)
-            image.append(self.visual_image(self.current_coordinate))
+            image.append(self.visual_image())
             coordinates.append(self.current_coordinate)
 
         input = []
