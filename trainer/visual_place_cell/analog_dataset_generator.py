@@ -26,6 +26,7 @@ class DatasetGenerator:
             (self.size[0],           -1)]
 
     def visual_image(self, coordinate=(0, 0)):
+        #DEGREE_PER_DOT = 3
         DEGREE_PER_DOT = 6
 
         image = np.zeros(360 / DEGREE_PER_DOT)
@@ -47,67 +48,95 @@ class DatasetGenerator:
         directions = []
         velocitys =[]
         coordinates = []
-        ang_option = 60
-        vel_option = 0.25
+        #ang_option = 60
+        ang_option = 90
+        vel_option = 1
+        maze_size = (9,9)
 
         image.append(self.visual_image((0, 0)))
         coordinates.append((0, 0))
 
         for i in range(0, seq_length):
-
-            vel_choice = [x*vel_option for x in range(0, 5)]
-
-            
+                        
             #  movement  -> ang -> velocity
             #print(self.current_coordinate)
-            if self.current_coordinate[0] < 1 and self.current_coordinate[1] < 1:
-                ang_choice = [x for x in range(0, 91, ang_option)]
-            elif self.current_coordinate[0] >= self.size[0] - 2 and self.current_coordinate[1] < 1: 
-                ang_choice = [x for x in range(120, 181, ang_option)]            
-            elif self.current_coordinate[0] >= self.size[0] - 2 and self.current_coordinate[1] >= self.size[1] - 2:
-                ang_choice = [x for x in range(180, 270, ang_option)] 
-            elif self.current_coordinate[0] < 1 and self.current_coordinate[1] >= self.size[1] - 2:
-                ang_choice = [x for x in range(300, 361, ang_option)]
-                
-            elif self.current_coordinate[0] >= self.size[0] - 2:
-                ang_choice = [x for x in range(120, 270, ang_option)] 
-            elif self.current_coordinate[0] < 1:
-                ang_choice = [x for x in range(0, 91, ang_option)] + [x for x in range(300, 360, ang_option)]
-            elif self.current_coordinate[1] >= self.size[1] - 2:
-                ang_choice = [x for x in range(180, 361, ang_option)]
-            elif self.current_coordinate[1] < 1:
-                ang_choice = [x for x in range(0, 181, ang_option)]
-            else:
-                ang_choice = [x for x in range(0, 360, ang_option) ]
-        
-            ang = random.choice(ang_choice) 
+
+            #vel_choice = [x*vel_option for x in range(0, 5)]
+            vel_choice = [x*vel_option for x in range(1, 2)]
             vel = random.choice(vel_choice)
-            #print(vel)
+
+            ang_choice = [x for x in range(0, 360, ang_option) ]
+            ang = random.choice(ang_choice)
+            
+           
             #print(ang)
-            #print(math.cos(float(ang)/180*math.pi))
+            #print(math.maze_size[1] - self.current_coordinate[1])cos(float(ang)/180*math.pi))
 
             # move
             #print(self.current_coordinate)
-            
-            self.current_coordinate = (self.current_coordinate[0] + vel * math.cos(float(ang)/180*math.pi),
-                                       self.current_coordinate[1] + vel * math.sin(float(ang)/180*math.pi))
+            if  0 < ang < 90:
+                X_dis = (maze_size[0] -1 - self.current_coordinate[0])/math.cos(float(ang)/180*math.pi)
+                Y_dis = (maze_size[1] -1 - self.current_coordinate[1])/math.sin(float(ang)/180*math.pi)
+            if 90 < ang < 180:
+                X_dis = (   0            + self.current_coordinate[0])/math.cos(float(180-ang)/180*math.pi)
+                Y_dis = (maze_size[1] -1 - self.current_coordinate[1])/math.sin(float(180-ang)/180*math.pi)
+            if 180 < ang < 270:
+                X_dis = (   0            + self.current_coordinate[0])/math.cos(float(ang-180)/180*math.pi)
+                Y_dis = (   0            + self.current_coordinate[1])/math.sin(float(ang-180)/180*math.pi)
+            if 270 < ang < 360:
+                X_dis = (maze_size[0] -1 - self.current_coordinate[0])/math.cos(float(360-ang)/180*math.pi)
+                Y_dis = (   0            + self.current_coordinate[1])/math.sin(float(360-ang)/180*math.pi)
+            if ang == 0:
+                X_dis = (maze_size[0] -1 - self.current_coordinate[0])
+                Y_dis = 100
+            if ang == 90:
+                X_dis = 100
+                Y_dis = (maze_size[1] -1 - self.current_coordinate[1])
+            if ang == 180:
+                X_dis = (   0            + self.current_coordinate[0])
+                Y_dis = 100
+            if ang == 270:
+                X_dis = 100
+                Y_dis = (   0            + self.current_coordinate[1])
+
+            if vel > min(math.fabs(X_dis),math.fabs(Y_dis)):
+                #print(min(math.fabs(X_dis),math.fabs(Y_dis)))
+                #vel = min(math.fabs(X_dis),math.fabs(Y_dis)) - min(math.fabs(X_dis),math.fabs(Y_dis))%0.25
+                ang = ang + 180
+                if ang >= 360:
+                    ang = ang - 360
+                
+            #print(ang)
+            #print(vel)
+
+            self.current_coordinate = (self.current_coordinate[0] + vel * round(math.cos(float(ang)/180*math.pi)),
+                                       self.current_coordinate[1] + vel * round(math.sin(float(ang)/180*math.pi)))
+
             #print(self.current_coordinate)
-            if self.current_coordinate[0] < 0:
-              sys.exit("minus")
-            direction = [0] * (360/ang_option+1)
+            
+            if self.current_coordinate[0] < -0.1 or self.current_coordinate[1] < -0.1 or self.current_coordinate[0] > 8 or  self.current_coordinate[1] > 8:
+              sys.exit("over_maze")
+              
+            direction = [0] * (360/ang_option)
             direction[int(ang/ang_option)] = 1
-            velocity  = [0] * 5
-            velocity[int(vel/vel_option)]  = 1        
+            #print(direction)
+            #velocity  = [0] * 2
+            #velocity[int(vel/vel_option)-1]  = 1
+            velocity =[1] * 1
+            #print(velocity)
 
             directions.append(direction)
+            #print(directions)
             velocitys.append(velocity)
             image.append(self.visual_image(self.current_coordinate))
             coordinates.append(self.current_coordinate)
 
         input = []
-        #for i in range(len(directions)):
-        for i in range(0, seq_length):
-            input.append(directions[i] + velocitys[i] + image[i].tolist())
+        for i in range(len(directions)):
+        #for i in range(0, seq_length):
+            #input.append(directions[i] + velocitys[i] + image[i].tolist())
+            #print(input)
+            input.append(directions[i] + image[i].tolist())
 
         return { 'input': input, 'output': image[1:], 'coordinates': coordinates[1:] }
 

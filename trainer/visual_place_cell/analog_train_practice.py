@@ -32,6 +32,9 @@ valid_len = n_epoch // 100 # 1000 # epoch on which accuracy and perp are calcula
 grad_clip = 5 # gradient norm threshold to clip
 maze_size = (9, 9)
 
+#vel_option = 1
+#ang_option = 90
+
 train_data_length = [20, 100]
 
 # GPU
@@ -52,7 +55,7 @@ test_data = dg.generate_seq(100)
 
 # model
 model = chainer.FunctionSet(
-        x_to_h = F.Linear(72, n_units * 4),
+        x_to_h = F.Linear(64, n_units * 4),
         h_to_h = F.Linear(n_units, n_units * 4),
         h_to_y = F.Linear(n_units, 60))
 if args.gpu >= 0:
@@ -165,7 +168,7 @@ for loop in range(len(train_data_length)):
         epoch += 1
 
         # save the model
-        f = open('vel_analog_pretrained_model_'+str(maze_size[0])+'_'+str(maze_size[1])+'.pkl', 'wb')
+        f = open('1023_analog.pkl', 'wb')
         pickle.dump(model, f, 2)
         f.close()
 
