@@ -12,27 +12,32 @@ import sys
 import time
 import random
 import pickle
+import datetime
 
 import numpy as np
 import six
+import matplotlib.pyplot as plt
 
 import chainer
 from chainer import cuda
 import chainer.functions as F
 from chainer import optimizers
 
+from dataset_generator import DatasetGenerator
+
 # set parameters
-n_epoch = 10000 # number of epochs
+n_epoch = 2000 # number of epochs
 n_units = 25 # number of units per layer, len(train)=5 -> 20 might be the best
 batchsize = 1 # minibatch size
 bprop_len = 1 # length of truncated BPTT
-valid_len = n_epoch // 100 # 1000 # epoch on which accuracy and perp are calculated
+valid_len = n_epoch // 50 # 1000 # epoch on which accuracy and perp are calculated
 grad_clip = 5 # gradient norm threshold to clip
-maze_size_x = 9
-maze_size_y = 9
+maze_size = (9, 9)
 
-train_data_length = [20, 100]
-offset_timing =2
+train_data_length = [100]
+offset_timing = 2
+
+valid_iter = 20
 
 # GPU
 parser = argparse.ArgumentParser()
@@ -41,103 +46,20 @@ parser.add_argument('--gpu', '-g', default=-1, type=int,
 args = parser.parse_args()
 mod = cuda.cupy if args.gpu >= 0 else np
 
-# generate dataset
-"""
-input data: direction (one-hot)
-output target: coordinate (converted to 1D)
-"""
-def generate_seq(seq_length, maze_size_x, maze_size_y):
-    directions = []
-    locations_1d = [] # 1D coorinate
-    
-    locations_1d.append(0)
-
-    current = (0, 0) # 2D coordinate
-    for i in range(0, seq_length):
-    	direction_choice = [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]] 
-        if current[0] == maze_size_x-1:
-            direction_choice.remove([1, 0, 0, 0])
-        if current[0] == 0:
-            direction_choice.remove([0, 1, 0, 0])
-        if current[1] == maze_size_y-1:
-            direction_choice.remove([0, 0, 1, 0])
-        if current[1] == 0:
-            direction_choice.remove([0, 0, 0, 1])
-        direction = random.choice(direction_choice)            
-        
-        if   direction == [1, 0, 0, 0]:
-            current = (current[0] + 1, current[1]    )
-        elif direction == [0, 1, 0, 0]:
-            current = (current[0] - 1, current[1]    )
-        elif direction == [0, 0, 1, 0]:
-            current = (current[0]    , current[1] + 1)
-        elif direction == [0, 0, 0, 1]:
-            current = (current[0]    , current[1] - 1)
-        
-        directions.append(direction)
-        locations_1d.append(current[0]+current[1]*maze_size_x)
-        
-    # directions = np.array(directions, dtype='float32')
-    # locations_1d = np.array(locations_1d, dtype='int32')
-    return directions, locations_1d
-
-def generate_seq_remote(seq_length, maze_size_x, maze_size_y):
-    directions = []
-    locations_1d = [] # 1D coorinate
-    
-    locations_1d.append(0)
-
-    current = (0, 0) # 2D coordinate
-    for i in range(0, seq_length):
-    	direction_choice = [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]] 
-        if current[0] == maze_size_x-1:
-            direction_choice.remove([1, 0, 0, 0])
-        if current[0] == 0:
-            direction_choice.remove([0, 1, 0, 0])
-        if current[1] == maze_size_y-1:
-            direction_choice.remove([0, 0, 1, 0])
-        if current[1] == 0:
-            direction_choice.remove([0, 0, 0, 1])
-          
-        if current[0] == 4 and current[1] <= 4:
-            threshold = 0.2
-            if random.random() > threshold:
-                direction_choice.remove([0, 1, 0, 0])
-        if current[1] == 4 and current[0] <= 4:
-            threshold = 0.2
-            if random.random() > threshold:
-                direction_choice.remove([0, 0, 0, 1])
-            
-        direction = random.choice(direction_choice)       
-            
-        if   direction == [1, 0, 0, 0]:
-            current = (current[0] + 1, current[1]    )
-        elif direction == [0, 1, 0, 0]:
-            current = (current[0] - 1, current[1]    )
-        elif direction == [0, 0, 1, 0]:
-            current = (current[0]    , current[1] + 1)
-        elif direction == [0, 0, 0, 1]:
-            current = (current[0]    , current[1] - 1)
-        
-        directions.append(direction)
-        locations_1d.append(current[0]+current[1]*maze_size_x)
-        
-    # directions = np.array(directions, dtype='float32')
-    # locations_1d = np.array(locations_1d, dtype='int32')
-    return directions, locations_1d    
-    
-    
 # validation dataset
-valid_data, valid_targets = generate_seq(100, maze_size_x, maze_size_y)
+valid_data_stack = []
+for i in range(valid_iter):
+    valid_data = DatasetGenerator(maze_size).generate_seq(100, offset_timing)
+    valid_data_stack.append(valid_data)
 
 # test dataset
-test_data, test_targets = generate_seq(100, maze_size_x, maze_size_y)
+test_data = DatasetGenerator(maze_size).generate_seq(100, offset_timing)
 
 # model
 model = chainer.FunctionSet(
-    x_to_h = F.Linear(85, n_units * 4),
+    x_to_h = F.Linear(64, n_units * 4),
     h_to_h = F.Linear(n_units, n_units * 4),
-    h_to_y = F.Linear(n_units, maze_size_x * maze_size_y))
+    h_to_y = F.Linear(n_units, maze_size[0] * maze_size[1]))
 if args.gpu >= 0:
     cuda.check_cuda_available()
     cuda.get_device(args.gpu).use()
@@ -164,31 +86,34 @@ def forward_one_step(data, targets, state, train=True):
 # initialize hidden state
 def make_initial_state(batchsize=batchsize, train=True):
     return {name: chainer.Variable(mod.zeros((batchsize, n_units),
-                                             dtype=np.float32),
-                                   volatile=not train)
-            for name in ('c', 'h')}
+        dtype=np.float32),
+        volatile=not train)
+        for name in ('c', 'h')}
 
 # evaluation
-def evaluate(data, targets, test=False):
+def evaluate(data, test=False):
     sum_accuracy = mod.zeros(())
     state = make_initial_state(batchsize=1, train=False)
     
-    for i in six.moves.range(len(data)):
-        one_hot_target = inilist = [0] * 81
-        if targets[i] % 2 == 0: 
-            one_hot_target[targets[i]] = 1
-        x_batch = mod.array([data[i] + one_hot_target], dtype = 'float32')
-        t_batch = mod.array([targets[i + 1]], dtype = 'int32')
+    for i in six.moves.range(len(data['input'])):
+        x_batch = mod.asarray([data['input'][i]], dtype = 'float32')
+        t_batch = mod.asarray([data['output'][i]], dtype = 'int32')
         state, loss, accuracy = forward_one_step(x_batch, t_batch, state, train=False)
         sum_accuracy += accuracy.data
-        if test == True:
-            print('{} Target: ({}, {})'.format(accuracy.data, t_batch[0] % maze_size_x, 
-                t_batch[0] // maze_size_x))
+        
+        error = 1 - sum_accuracy / len(data['input'])
+    return error # return error, not accuracy!!
 
-            # print('c: {}, h: {}'.format(state['c'].data, state['h'].data)) # show the hidden states
-    return int(cuda.to_cpu(sum_accuracy))
-                
 # learning loop iterations
+epoch = 0
+print('[train]')
+print('going to train {} epochs'.format(n_epoch))
+
+# stack errors
+train_errors = np.zeros(n_epoch / valid_len + 1)
+valid_errors_mean = np.zeros(n_epoch / valid_len + 1)
+valid_errors_se = np.zeros(n_epoch / valid_len + 1)
+
 for loop in range(len(train_data_length)):
 
     # loop initialization
@@ -197,10 +122,7 @@ for loop in range(len(train_data_length)):
     cur_log_perp = mod.zeros(())
     start_at = time.time()
     cur_at = start_at
-    epoch = 0
     accum_loss = chainer.Variable(mod.zeros((), dtype=np.float32))
-    print('[train]')
-    print('going to train {} iterations'.format(jump * n_epoch))
     
     # loop starts
     while epoch <= n_epoch:
@@ -210,18 +132,54 @@ for loop in range(len(train_data_length)):
         
         # train dataset
         if loop == 0:
-            train_data, train_targets = generate_seq(whole_len, maze_size_x, maze_size_y)
+            train_data = DatasetGenerator(maze_size).generate_seq(whole_len, offset_timing)
         else:
-            train_data, train_targets = generate_seq_remote(whole_len, maze_size_x, maze_size_y)
-         
+            train_data = DatasetGenerator(maze_size).generate_seq_remote(whole_len, offset_timing)
+        
+        if epoch % valid_len == 0:
+        
+            # calculate accuracy, cumulative loss & throughput
+            train_perp = evaluate(train_data) # error
+            valid_perp_stack = np.zeros(valid_iter)
+            for i in range(valid_iter):
+                valid_perp = evaluate(valid_data_stack[i]) # error
+                valid_perp_stack[i] = valid_perp
+            valid_perp_mean = np.mean(valid_perp_stack, axis=0)
+            valid_errors_mean[epoch / valid_len] = valid_perp_mean
+            valid_perp_se = np.std(valid_perp_stack, axis=0) / np.sqrt(valid_iter)
+            valid_errors_se[epoch / valid_len] = valid_perp_se
+            train_errors[epoch / valid_len] = train_perp
+            
+            if epoch == 0:
+                perp = None
+            else:
+                perp = cuda.to_cpu(cur_log_perp) / valid_len
+                perp = int(perp * 100) / 100.0
+                
+            now = time.time()
+            
+            if epoch == 0:
+                throughput = 0.0
+            else:
+                throughput = valid_len / (now - cur_at)
+
+            print('epoch {}: train perp: {} train classified {}/{}, valid classified {}/100 ({:.2f} epochs/sec)'
+            .format(epoch, perp, whole_len * (1 - train_perp), whole_len, 100 * (1 - valid_perp_mean), throughput))
+            
+            cur_at = now
+            
+            #  termination criteria
+            # if perp < 0.001:
+            #     break
+            # else:
+            #     cur_log_perp.fill(0)
+            cur_log_perp.fill(0)
+            
         for i in six.moves.range(jump):
         
             # forward propagation
-            one_hot_target = inilist = [0] * 81
-            if  train_targets[i] % 2 == 0:
-                one_hot_target[train_targets[i]] = 1
-            x_batch = mod.array([train_data[i] + one_hot_target], dtype = 'float32')
-            t_batch = mod.array([train_targets[i + 1]], dtype = 'int32')
+            x_batch = mod.array([train_data['input'][i]],  dtype = 'float32')
+            t_batch = mod.array([train_data['output'][i]], dtype = 'int32')
             
             state, loss_i, acc_i = forward_one_step(x_batch, t_batch, state)
             accum_loss += loss_i
@@ -237,34 +195,49 @@ for loop in range(len(train_data_length)):
                 optimizer.update()
             
             sys.stdout.flush()
-        
-        if (epoch + 1) % valid_len == 0: 
-            
-            # calculate accuracy, cumulative loss & throuput
-            train_perp = evaluate(train_data, train_targets)
-            valid_perp = evaluate(valid_data, valid_targets)
-            perp = cuda.to_cpu(cur_log_perp) / valid_len
-            now = time.time()
-            throuput = valid_len / (now - cur_at)
-            print('epoch {}: train perp: {:.2f} train classified {}/{}, valid classified {}/{} ({:.2f} epochs/sec)'
-                .format(epoch+1, perp, train_perp, whole_len, valid_perp, len(valid_data), throuput))            
-            cur_at = now
-            
-            #  termination criteria
-            if perp < 0.001:
-                break
-            else:
-                cur_log_perp.fill(0)   
             
         epoch += 1  
         
         # save the model    
-        f = open('pretrained_model_'+str(maze_size_x)+'_'+str(maze_size_y)+'_'+str(offset_timing)+'.pkl', 'wb')
+        f = open('pretrained_model_'+str(maze_size[0])+'_'+str(maze_size[1])+'.pkl', 'wb')
         pickle.dump(model, f, 2)
         f.close()      
-                    
-    # Evaluate on test dataset
-    print('[test]')
-    test_perp = evaluate(test_data, test_targets, test=True)
-    print('test classified: {}/{}'.format(test_perp, len(test_data)))
-                
+
+# plot
+x = np.arange(0, n_epoch + 1, valid_len)
+plt. plot(x, train_errors, 'bo-')
+plt.hold(True)
+plt. errorbar(x, valid_errors_mean, yerr = valid_errors_se, fmt='ro-')
+plt.title('LSTM errors of path integrating place cells')
+plt.xlabel('training epochs')
+plt.ylabel('error')
+plt.legend(['train', 'test'], loc =1)
+# plt.ylim([0, 0.05])
+d = datetime.datetime.today()
+
+# save plots in PNG and SVG
+plt.savefig('plot_' + d.strftime("%Y%m%d%H%M%S") + '.svg')
+plt.savefig('plot_' + d.strftime("%Y%m%d%H%M%S") + '.png')
+
+# save x
+f = open('plot_' + d.strftime("%Y%m%d%H%M%S") + '_x.pkl', 'wb')
+pickle.dump(x, f, 2)
+f.close()
+
+# save train errors
+f = open('plot_' + d.strftime("%Y%m%d%H%M%S") + '_train_errors.pkl', 'wb')
+pickle.dump(train_errors, f, 2)
+f.close()
+
+# save mean of valid errors
+f = open('plot_' + d.strftime("%Y%m%d%H%M%S") + '_valid_errors_mean.pkl', 'wb')
+pickle.dump(valid_errors_mean, f, 2)
+f.close()
+
+# save SE of valid erros
+f = open('plot_' + d.strftime("%Y%m%d%H%M%S") + '_se.pkl', 'wb')
+pickle.dump(valid_errors_se, f, 2)
+f.close()
+
+plt.show()
+
