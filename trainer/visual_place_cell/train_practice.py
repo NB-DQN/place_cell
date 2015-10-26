@@ -12,6 +12,7 @@ import sys
 import time
 import random
 import pickle
+import datetime
 
 import numpy as np
 import six
@@ -26,14 +27,14 @@ from dataset_generator import DatasetGenerator
 
 # set parameters
 n_epoch = 4000 # number of epochs
-n_units = 60 # number of units per layer, len(train)=5 -> 20 might be the best
+n_units = 60 # number of units per layer
 batchsize = 1 # minibatch size
 bprop_len = 1 # length of truncated BPTT
-valid_len = n_epoch // 100 # 1000 # epoch on which accuracy and perp are calculated
+valid_len = n_epoch // 100 # epoch on which accuracy and perp are calculated
 grad_clip = 5 # gradient norm threshold to clip
 maze_size = (9, 9)
 
-whole_len = 100
+whole_len = 100  # seq length of training datasset
 valid_iter = 20
 
 # GPU
@@ -128,7 +129,7 @@ while epoch <= n_epoch:
 
     if epoch % valid_len == 0:
 
-        # calculate accuracy, cumulative loss & throuput
+        # calculate accuracy, cumulative loss & throughput
         train_perp = evaluate(train_data)
         valid_perp_stack = np.zeros(valid_iter)
         for i in range(valid_iter):
@@ -149,12 +150,12 @@ while epoch <= n_epoch:
         now = time.time()
         
         if epoch == 0:
-            throuput =  0.0
+            throughput = 0.0
         else:
-            throuput = valid_len / (now - cur_at)
+            throughput = valid_len / (now - cur_at)
             
         print('epoch {}: train perp: {} train mean squared error: {:.5f}, valid mean squared error: {:.5f} ({:.2f} epochs/sec)'
-                .format(epoch, perp, train_perp, valid_perp_mean, throuput))
+                .format(epoch, perp, train_perp, valid_perp_mean, throughput))
                 
         cur_at = now
         
@@ -203,12 +204,36 @@ x = np.arange(0, n_epoch + 1, valid_len)
 plt. plot(x, train_errors, 'bo-')
 plt.hold(True)
 plt. errorbar(x, valid_errors_mean, yerr = valid_errors_se, fmt='ro-')
-plt.title('LSTM errors')
+plt.title('LSTM error of visual predicting place cells')
 plt.xlabel('training epochs')
 plt.ylabel('mean squared error')
 plt.legend(['train', 'test'], loc =1)
 plt.ylim([0, 0.05])
-# plt.savefig("figure1.svg")
-# plt.savefig("figure1.png")
+d = datetime.datetime.today()
+
+# save plots in PNG and SVG
+plt.savefig('plot_' + d.strftime("%Y%m%d%H%M%S") + '.svg')
+plt.savefig('plot_' + d.strftime("%Y%m%d%H%M%S") + '.png')
+
+# save x
+f = open('plot_x_' + d.strftime("%Y%m%d%H%M%S") + '.pkl', 'wb')
+pickle.dump(x, f, 2)
+f.close()
+
+# save train errors
+f = open('plot_train_errors_' + d.strftime("%Y%m%d%H%M%S") + '.pkl', 'wb')
+pickle.dump(train_errors, f, 2)
+f.close()
+
+# save mean of valid errors
+f = open('plot_valid_errors_mean_' + d.strftime("%Y%m%d%H%M%S") + '.pkl', 'wb')
+pickle.dump(valid_errors_mean, f, 2)
+f.close()
+
+# save SE of valid erros
+f = open('plot_valid_errors_se_' + d.strftime("%Y%m%d%H%M%S") + '.pkl', 'wb')
+pickle.dump(valid_errors_se, f, 2)
+f.close()
+
 plt.show()
 

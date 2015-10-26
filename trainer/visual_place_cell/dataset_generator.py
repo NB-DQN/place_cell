@@ -76,7 +76,7 @@ class DatasetGenerator:
 
             directions.append(direction)
             image.append(self.visual_image())
-            coordinates.append(self.current_coordinate)
+            coordinates.append(self.coordinate_id())
 
         input = []
         for i in range(len(directions)):
