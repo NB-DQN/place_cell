@@ -25,7 +25,7 @@ from chainer import optimizers
 from dataset_generator import DatasetGenerator
 
 # set parameters
-n_epoch = 10000 # number of epochs
+n_epoch = 4000 # number of epochs
 n_units = 60 # number of units per layer, len(train)=5 -> 20 might be the best
 batchsize = 1 # minibatch size
 bprop_len = 1 # length of truncated BPTT
@@ -33,7 +33,7 @@ valid_len = n_epoch // 100 # 1000 # epoch on which accuracy and perp are calcula
 grad_clip = 5 # gradient norm threshold to clip
 maze_size = (9, 9)
 
-whole_len = 20
+whole_len = 100
 valid_iter = 20
 
 # GPU
@@ -43,17 +43,14 @@ parser.add_argument('--gpu', '-g', default=-1, type=int,
 args = parser.parse_args()
 mod = cuda.cupy if args.gpu >= 0 else np
 
-# generate dataset
-dg = DatasetGenerator(maze_size)
-
 # validation dataset
 valid_data_stack = []
 for i in range(valid_iter):
-    valid_data = dg.generate_seq(100)
+    valid_data = DatasetGenerator(maze_size).generate_seq(100)
     valid_data_stack.append(valid_data)
 
 # test dataset
-test_data = dg.generate_seq(100)
+test_data = DatasetGenerator(maze_size).generate_seq(100)
 
 # model
 model = chainer.FunctionSet(
@@ -127,7 +124,7 @@ while epoch <= n_epoch:
     state = make_initial_state()
 
     # train dataset
-    train_data = dg.generate_seq(whole_len)
+    train_data = DatasetGenerator(maze_size).generate_seq(whole_len)
 
     if epoch % valid_len == 0:
 
