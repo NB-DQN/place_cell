@@ -33,7 +33,7 @@ from sklearn.metrics import accuracy_score
 from dataset_generator import DatasetGenerator
 
 # set parameters
-n_epoch = 10000 # number of epochs
+n_epoch = 15000 # number of epochs
 # n_units = 60 # number of units per layer
 batchsize = 1 # minibatch size
 bprop_len = 1 # length of truncated BPTT
@@ -120,15 +120,13 @@ def generate_seq_sklearn(iterations, test):
         
     return input_data , label
 
-
 # stack results
 lstm_errors_mean = np.zeros(len(list_n_units))
 lstm_errors_se = np.zeros(len(list_n_units))
 svm_errors_mean = np.zeros(len(list_n_units))
 svm_errors_se = np.zeros(len(list_n_units))
 
-
-# loop initialization
+# for loop on different n_units
 for j in range(len(list_n_units)):
     n_units = list_n_units[j]
     
@@ -146,7 +144,7 @@ for j in range(len(list_n_units)):
     optimizer = optimizers.SGD(lr=1.)
     optimizer.setup(model.collect_parameters())
     
-    
+    # loop initialization
     jump = whole_len // batchsize # = whole len
     cur_log_perp = mod.zeros(())
     start_at = time.time()
@@ -228,8 +226,6 @@ for j in range(len(list_n_units)):
         pickle.dump(model, f, 2)
         f.close()
     
-    
-
     # LSTM accuracy on validation dataset
     valid_perp_stack = np.zeros(valid_iter)
     for i in range(valid_iter):
@@ -249,6 +245,7 @@ for j in range(len(list_n_units)):
     tuned_parameters = [{'kernel': ['linear'], 'C': [1, 10, 100, 1000]}]
 
     # SVM grid search
+    print('start grid search')
     clf = GridSearchCV(SVC(C=1), tuned_parameters, cv=5, scoring='accuracy')
     clf.fit(svm_X_train, svm_y_train)
     
