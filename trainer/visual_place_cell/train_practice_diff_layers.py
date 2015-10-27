@@ -266,13 +266,14 @@ for j in range(len(list_n_units)):
 
 # plot
 x = np.array(list_n_units)
-plt. errorbar(x, lstm_errors_mean, yerr = lstm_errors_se, fmt='bo-')
-plt.hold(True)
-plt. errorbar(x, svm_errors_mean, yerr = svm_errors_se, fmt='go-')
-plt.title('lstm and svm error versus hidden size')
-plt.xlabel('size of hidden units')
-plt.ylabel('errors')
-plt.legend(['lstm', 'svm'], loc =1)
+fig, ax1 = plt.subplots()
+ax1. errorbar(x, lstm_errors_mean, yerr = lstm_errors_se, fmt='bo-')
+ax2 = ax1.twinx()
+ax2. errorbar(x, svm_errors_mean, yerr = svm_errors_se, fmt='go-')
+ax1.title('lstm and svm error versus hidden size')
+ax1.set_xlabel('size of hidden units')
+ax1.set_ylabel('LSTM error', color='b')
+ax2.set_ylabel('SVM error', color='g')
 d = datetime.datetime.today()
 
 # save plots in PNG and SVG
