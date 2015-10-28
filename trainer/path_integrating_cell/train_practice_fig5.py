@@ -26,7 +26,7 @@ from chainer import optimizers
 from dataset_generator_fig5 import DatasetGenerator
 
 # set parameters
-n_epoch = 200000 # number of epochs
+n_epoch = 300000 # number of epochs
 n_units = 25 # number of units per layer, len(train)=5 -> 20 might be the best
 batchsize = 1 # minibatch size
 bprop_len = 1 # length of truncated BPTT

@@ -26,7 +26,7 @@ from chainer import optimizers
 from dataset_generator import DatasetGenerator
 
 # set parameters
-n_epoch = 2000 # number of epochs
+n_epoch = 200000 # number of epochs
 n_units = 25 # number of units per layer, len(train)=5 -> 20 might be the best
 batchsize = 1 # minibatch size
 bprop_len = 1 # length of truncated BPTT
@@ -35,7 +35,7 @@ grad_clip = 5 # gradient norm threshold to clip
 maze_size = (9, 9)
 
 train_data_length = [100]
-offset_timing = 2
+offset_timing = 4
 
 valid_iter = 20
 
