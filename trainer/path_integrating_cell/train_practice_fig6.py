@@ -23,7 +23,7 @@ from chainer import cuda
 import chainer.functions as F
 from chainer import optimizers
 
-from dataset_generator import DatasetGenerator
+from dataset_generator_fig6 import DatasetGenerator
 
 # set parameters
 n_epoch = 300000 # number of epochs
