@@ -199,7 +199,7 @@ for loop in range(len(train_data_length)):
         epoch += 1  
         
         # save the model    
-        f = open('pretrained_model_'+str(maze_size[0])+'_'+str(maze_size[1])+'.pkl', 'wb')
+        f = open('pretrained_model_fig6_'+str(maze_size[0])+'_'+str(maze_size[1])+'.pkl', 'wb')
         pickle.dump(model, f, 2)
         f.close()      
 
