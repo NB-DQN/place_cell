@@ -16,7 +16,7 @@ import datetime
 
 import numpy as np
 import six
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 
 import chainer
 from chainer import cuda
@@ -203,6 +203,7 @@ for loop in range(len(train_data_length)):
         pickle.dump(model, f, 2)
         f.close()      
 
+"""
 # plot
 x = np.arange(0, n_epoch + 1, valid_len)
 plt. plot(x, train_errors, 'bo-')
@@ -213,11 +214,14 @@ plt.xlabel('training epochs')
 plt.ylabel('error')
 plt.legend(['train', 'test'], loc =1)
 # plt.ylim([0, 0.05])
+"""
 d = datetime.datetime.today()
 
+"""
 # save plots in PNG and SVG
 plt.savefig('plot_' + d.strftime("%Y%m%d%H%M%S") + '.svg')
 plt.savefig('plot_' + d.strftime("%Y%m%d%H%M%S") + '.png')
+"""
 
 # save x
 f = open('plot_' + d.strftime("%Y%m%d%H%M%S") + '_x.pkl', 'wb')
@@ -239,5 +243,5 @@ f = open('plot_' + d.strftime("%Y%m%d%H%M%S") + '_se.pkl', 'wb')
 pickle.dump(valid_errors_se, f, 2)
 f.close()
 
-plt.show()
+# plt.show()
 

@@ -301,5 +301,5 @@ f = open('plot_' + d.strftime("%Y%m%d%H%M%S") + '_svm_errors_se.pkl', 'wb')
 pickle.dump(svm_errors_se, f, 2)
 f.close()
 
-plt.show()
+# plt.show()
 
