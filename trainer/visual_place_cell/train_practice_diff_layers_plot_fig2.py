@@ -16,7 +16,7 @@ import datetime
 
 import numpy as np
 import six
-# import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 
 import chainer
 from chainer import cuda
@@ -264,6 +264,15 @@ for j in range(len(list_n_units)):
 # plot
 x = np.array(list_n_units)
 """
+plt. errorbar(x, lstm_errors_mean, yerr = lstm_errors_se, fmt='bo-')
+plt.hold(True)
+plt. errorbar(x, svm_errors_mean, yerr = svm_errors_se, fmt='go-')
+plt.title('LSTM and SVM error versus hidden size')
+plt.xlabel('size of hidden units')
+plt.ylabel('errors')
+plt.legend(['LSTM', 'SVM'], loc =1)
+"""
+
 fig, ax1 = plt.subplots()
 ax1. errorbar(x, lstm_errors_mean, yerr = lstm_errors_se, fmt='bo-')
 ax2 = ax1.twinx()
@@ -272,13 +281,13 @@ ax1.title('LSTM and SVM error versus hidden size')
 ax1.set_xlabel('size of hidden units')
 ax1.set_ylabel('LSTM error', color='b')
 ax2.set_ylabel('SVM error', color='g')
-"""
+
 d = datetime.datetime.today()
-"""
+
 # save plots in PNG and SVG
 plt.savefig('plot_' + d.strftime("%Y%m%d%H%M%S") + '.svg')
 plt.savefig('plot_' + d.strftime("%Y%m%d%H%M%S") + '.png')
-"""
+
 # save variables
 f = open('plot_' + d.strftime("%Y%m%d%H%M%S") + '_x.pkl', 'wb')
 pickle.dump(x, f, 2)
@@ -301,5 +310,5 @@ f = open('plot_' + d.strftime("%Y%m%d%H%M%S") + '_svm_errors_se.pkl', 'wb')
 pickle.dump(svm_errors_se, f, 2)
 f.close()
 
-# plt.show()
+plt.show()
 

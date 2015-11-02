@@ -38,9 +38,7 @@ for i in range(ev_iterations):
     test_hh_stack.extend(test_hh)
 
 input_data = test_hh_stack
-output_data = []
-for i in range(len(test_data_stack)):
-    output_data.append(test_data_stack[i][0] + test_data_stack[i][1] * 9)
+output_data = test_data_stack
 
 print('')
 

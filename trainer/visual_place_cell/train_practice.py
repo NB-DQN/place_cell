@@ -199,7 +199,7 @@ print('[test]')
 test_mean_squared_error = evaluate(test_data, test=True)
 print('test mean squared error: {:.5f}'.format(test_mean_squared_error))
 
-# plot
+# plot fig1
 x = np.arange(0, n_epoch + 1, valid_len)
 plt. plot(x, train_errors, 'bo-')
 plt.hold(True)
@@ -237,3 +237,18 @@ f.close()
 
 plt.show()
 
+"""
+# show weights
+A = model.x_to_h.W
+B = model.h_to_h.W
+C = model.h_to_y.W
+
+plt.subplot(1, 2, 1)
+plt.hist(A.reshape(A.size, 1), c='r')
+plt.hold(True)
+plt.hist(B.reshape(B.size, 1), c='b')
+plt.hold(True)
+plt.hist(C.reshape(C.size, 1), c='g')
+plt.legend(['x_to_h', 'h_to_h', 'h_to_y'])
+plt.title('****')
+"""

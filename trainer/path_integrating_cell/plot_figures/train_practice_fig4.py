@@ -16,17 +16,17 @@ import datetime
 
 import numpy as np
 import six
-# import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 
 import chainer
 from chainer import cuda
 import chainer.functions as F
 from chainer import optimizers
 
-from dataset_generator_fig6 import DatasetGenerator
+from dataset_generator import DatasetGenerator
 
 # set parameters
-n_epoch = 300000 # number of epochs
+n_epoch = 100000 # number of epochs
 n_units = 25 # number of units per layer, len(train)=5 -> 20 might be the best
 batchsize = 1 # minibatch size
 bprop_len = 1 # length of truncated BPTT
@@ -35,7 +35,7 @@ grad_clip = 5 # gradient norm threshold to clip
 maze_size = (9, 9)
 
 train_data_length = [100]
-offset_timing = 4
+offset_timing = 2
 
 valid_iter = 20
 
@@ -199,11 +199,10 @@ for loop in range(len(train_data_length)):
         epoch += 1  
         
         # save the model    
-        f = open('pretrained_model_fig6_'+str(maze_size[0])+'_'+str(maze_size[1])+'.pkl', 'wb')
+        f = open('pretrained_model_'+str(maze_size[0])+'_'+str(maze_size[1])+'.pkl', 'wb')
         pickle.dump(model, f, 2)
         f.close()      
 
-"""
 # plot
 x = np.arange(0, n_epoch + 1, valid_len)
 plt. plot(x, train_errors, 'bo-')
@@ -214,14 +213,11 @@ plt.xlabel('training epochs')
 plt.ylabel('error')
 plt.legend(['train', 'test'], loc =1)
 # plt.ylim([0, 0.05])
-"""
 d = datetime.datetime.today()
 
-"""
 # save plots in PNG and SVG
 plt.savefig('plot_' + d.strftime("%Y%m%d%H%M%S") + '.svg')
 plt.savefig('plot_' + d.strftime("%Y%m%d%H%M%S") + '.png')
-"""
 
 # save x
 f = open('plot_' + d.strftime("%Y%m%d%H%M%S") + '_x.pkl', 'wb')
@@ -243,5 +239,5 @@ f = open('plot_' + d.strftime("%Y%m%d%H%M%S") + '_se.pkl', 'wb')
 pickle.dump(valid_errors_se, f, 2)
 f.close()
 
-# plt.show()
+plt.show()
 

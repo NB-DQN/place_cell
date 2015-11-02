@@ -239,7 +239,7 @@ pickle.dump(valid_errors_mean, f, 2)
 f.close()
 
 # save SE of valid erros
-f = open('plot_' + d.strftime("%Y%m%d%H%M%S") + '_se.pkl', 'wb')
+f = open('plot_' + d.strftime("%Y%m%d%H%M%S") + '_ valid_errors_se.pkl', 'wb')
 pickle.dump(valid_errors_se, f, 2)
 f.close()
 
