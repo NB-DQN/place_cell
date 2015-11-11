@@ -1,7 +1,6 @@
 ## About
 
-This repository contains all codes we used in the following presentation.
-![BICA_poster] (https://drive.google.com/file/d/0B2kqHbj9q_K2QUkzM3NYamJCaUk/view?usp=sharing)
+This repository contains all codes for our presentation at BICA2015, Lyon.
 
 ## Requirements
 
