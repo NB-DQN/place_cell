@@ -1,6 +1,6 @@
 ## About
 
-This repository contains all codes for our presentation at BICA2015, Lyon.
+
 
 ## Requirements
 
